@@ -76,7 +76,16 @@ WHISPER_MODELS = [
     "projecte-aina/whisper-large-v3-ca-3catparla",
 ]
 
-ALL_MODELS = OMNILINGUAL_MODELS + WHISPER_MODELS
+VIBEVOICE_MODELS = [
+    "microsoft/VibeVoice-ASR",
+]
+
+GEMMA_MODELS = [
+    "gemma-4-E4B",
+    "gemma-4-E2B",
+]
+
+ALL_MODELS = OMNILINGUAL_MODELS + WHISPER_MODELS + VIBEVOICE_MODELS + GEMMA_MODELS
 
 
 class ASRModel(Protocol):
@@ -148,6 +157,149 @@ class WhisperWrapper:
         return result["text"] if result else ""
 
 
+class VibeVoiceWrapper:
+    """Wrapper for Microsoft VibeVoice-ASR (custom library required)."""
+
+    def __init__(self, model_name: str, device: str):
+        from vibevoice.modular.modeling_vibevoice_asr import VibeVoiceASRForConditionalGeneration
+        from vibevoice.processor.vibevoice_asr_processor import VibeVoiceASRProcessor
+
+        self.processor = VibeVoiceASRProcessor.from_pretrained(
+            model_name,
+            language_model_pretrained_name="Qwen/Qwen2.5-7B",
+        )
+        self.model = VibeVoiceASRForConditionalGeneration.from_pretrained(
+            model_name,
+            dtype=torch.bfloat16,
+            attn_implementation="sdpa",
+            trust_remote_code=True,
+        ).to(device)
+        self.model.eval()
+        self.device = device
+        self.model_name = model_name
+
+    def transcribe(self, waveform: torch.Tensor, sample_rate: int, lang: str) -> str:
+        # Processor expects audio at 24kHz; resample if needed
+        target_sr = self.processor.target_sample_rate
+        if sample_rate != target_sr:
+            resampler = torchaudio.transforms.Resample(sample_rate, target_sr)
+            waveform = resampler(waveform.unsqueeze(0)).squeeze(0)
+
+        inputs = self.processor(
+            audio=[waveform.numpy()],
+            sampling_rate=target_sr,
+            return_tensors="pt",
+            padding=True,
+            add_generation_prompt=True,
+            context_info="The audio is in Catalan language.",
+        )
+        inputs = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()}
+
+        with torch.no_grad():
+            output_ids = self.model.generate(
+                **inputs,
+                max_new_tokens=512,
+                pad_token_id=self.processor.pad_id,
+                eos_token_id=self.processor.tokenizer.eos_token_id,
+                do_sample=False,
+            )
+
+        input_length = inputs["input_ids"].shape[1]
+        generated_ids = output_ids[0, input_length:]
+        eos_pos = (generated_ids == self.processor.tokenizer.eos_token_id).nonzero(as_tuple=True)[0]
+        if len(eos_pos) > 0:
+            generated_ids = generated_ids[: eos_pos[0] + 1]
+        raw_text = self.processor.decode(generated_ids, skip_special_tokens=True)
+
+        PLACEHOLDERS = {"[Silence]", "[Unintelligible Speech]", "[noise]", "[music]"}
+        try:
+            segments = self.processor.post_process_transcription(raw_text)
+            if segments:
+                texts = [seg.get("text", "") for seg in segments if seg.get("text", "") not in PLACEHOLDERS]
+                return " ".join(texts).strip()
+        except Exception:
+            pass
+        return raw_text
+
+
+class Gemma4Wrapper:
+    """Wrapper for Gemma 4 multimodal models with audio/ASR support."""
+
+    MAX_AUDIO_DURATION = 30.0  # Gemma 4 audio limit in seconds
+
+    def __init__(self, model_name: str, device: str):
+        from transformers import AutoModelForMultimodalLM, AutoProcessor
+
+        model_id = f"google/{model_name}-it"
+        self.processor = AutoProcessor.from_pretrained(model_id)
+        self.model = AutoModelForMultimodalLM.from_pretrained(
+            model_id,
+            dtype="auto",
+            device_map="auto",
+        )
+        self.model_name = model_name
+
+    def transcribe(self, waveform: torch.Tensor, sample_rate: int, lang: str) -> str:
+        import tempfile
+
+        import soundfile as sf
+
+        # Gemma 4 expects a file path; write waveform to a temp WAV file
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp_path = tmp.name
+
+        try:
+            sf.write(tmp_path, waveform.numpy(), sample_rate)
+
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "audio", "audio": tmp_path},
+                        {
+                            "type": "text",
+                            "text": (
+                                f"Transcribe the following {lang} speech segment verbatim into {lang}. "
+                                "Do not translate. Do not paraphrase. Do not add any commentary.\n"
+                                "Formatting rules:\n"
+                                "* Output only the transcription, nothing else, with no newlines.\n"
+                                "* Do not add punctuation unless it was clearly spoken.\n"
+                                "* Write numbers as digits (e.g. 3 not three, 1.7 not one point seven)."
+                            ),
+                        },
+                    ],
+                }
+            ]
+
+            inputs = self.processor.apply_chat_template(
+                messages,
+                tokenize=True,
+                return_dict=True,
+                return_tensors="pt",
+                add_generation_prompt=True,
+            ).to(self.model.device)
+            input_len = inputs["input_ids"].shape[-1]
+
+            outputs = self.model.generate(
+                **inputs,
+                max_new_tokens=512,
+                do_sample=False,
+                temperature=1.0,
+                repetition_penalty=1.0,
+            )
+            response = self.processor.decode(
+                outputs[0][input_len:], skip_special_tokens=False
+            )
+            parsed = self.processor.parse_response(response)
+            if isinstance(parsed, dict):
+                return parsed.get("text", parsed.get("transcription", str(parsed)))
+            return parsed
+        finally:
+            import os
+
+            os.unlink(tmp_path)
+
+
 def load_model(model_name: str, device: str) -> ASRModel:
     """Load the appropriate ASR model based on name."""
     if model_name in OMNILINGUAL_MODELS:
@@ -156,6 +308,12 @@ def load_model(model_name: str, device: str) -> ASRModel:
     elif model_name in WHISPER_MODELS:
         print(f"Loading Whisper model: {model_name}")
         return WhisperWrapper(model_name, device)
+    elif model_name in VIBEVOICE_MODELS:
+        print(f"Loading VibeVoice model: {model_name}")
+        return VibeVoiceWrapper(model_name, device)
+    elif model_name in GEMMA_MODELS:
+        print(f"Loading Gemma 4 model: {model_name}")
+        return Gemma4Wrapper(model_name, device)
     else:
         raise ValueError(f"Unknown model: {model_name}. Available: {ALL_MODELS}")
 
@@ -228,6 +386,7 @@ def evaluate_language(
         locale,
         split="test",
         streaming=True,
+        trust_remote_code=True,
     )
 
     print(f"Evaluating on {num_samples} samples...")
@@ -378,7 +537,7 @@ def main():
     parser.add_argument(
         "--num_samples",
         type=int,
-        default=100,
+        default=200,
         help="Number of samples to evaluate per language",
     )
     parser.add_argument(
@@ -402,6 +561,12 @@ def main():
             print(f"  - {m}")
         print("\nWhisper:")
         for m in WHISPER_MODELS:
+            print(f"  - {m}")
+        print("\nVibeVoice (custom library required):")
+        for m in VIBEVOICE_MODELS:
+            print(f"  - {m}")
+        print("\nGemma 4 (audio, max 30s):")
+        for m in GEMMA_MODELS:
             print(f"  - {m}")
         return
 
@@ -437,12 +602,14 @@ def main():
         model = load_model(model_name, args.device)
         print("Model loaded successfully!")
 
+        max_duration = Gemma4Wrapper.MAX_AUDIO_DURATION if model_name in GEMMA_MODELS else 40.0
         for lang_code in languages:
             result = evaluate_language(
                 model=model,
                 model_name=model_name,
                 lang_code=lang_code,
                 num_samples=args.num_samples,
+                max_duration=max_duration,
             )
             all_results.append((model_name, result))
 

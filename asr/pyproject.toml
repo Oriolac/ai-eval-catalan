@@ -1,0 +1,26 @@
+[project]
+name = "asr-eval"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "torch",
+    "torchaudio",
+    "datasets<3.0",
+    "soundfile",
+    "librosa",
+    "jiwer",
+    "tqdm",
+    "transformers",
+    "pillow>=12.2.0",
+    "torchvision>=0.26.0",
+    "accelerate>=1.13.0",
+]
+
+[tool.uv]
+# omnilingual_asr is a local/private package not available on PyPI.
+# Install it separately before running: pip install -e /path/to/omnilingual_asr
+#
+# VibeVoice is also not on PyPI. Clone and install before using microsoft/VibeVoice-ASR:
+#   git clone https://github.com/microsoft/VibeVoice
+#   uv pip install -e VibeVoice
