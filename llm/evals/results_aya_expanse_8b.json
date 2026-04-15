@@ -1,5 +1,7 @@
 {
   "model": "bartowski/aya-expanse-8b-GGUF:Q8_0",
+  "params_b": 8.0,
+  "memory_gb": 8.5,
   "benchmarks": {
     "veritasqa": {
       "accuracy": 1.0,

@@ -1,29 +1,29 @@
 {
-  "model": "bartowski/Qwen_Qwen3.5-9B-GGUF:Q8_0",
-  "params_b": 9.0,
-  "memory_gb": 9.6,
+  "model": "RichardErkhov/BSC-LT_-_salamandra-7b-instruct-gguf:Q8_0",
+  "params_b": 7.0,
+  "memory_gb": 7.4,
   "benchmarks": {
     "veritasqa": {
       "accuracy": 1.0,
       "n": 353
     },
     "sts_ca": {
-      "pearson": 0.71,
+      "pearson": 0.5104,
       "n": 400
     },
     "casum": {
-      "rouge1": 0.4885,
-      "rouge2": 0.2865,
-      "rougeL": 0.4255,
+      "rouge1": 0.4882,
+      "rouge2": 0.3051,
+      "rougeL": 0.4235,
       "n": 400
     },
     "catcola": {
-      "mcc": 0.3379,
-      "accuracy": 0.7475,
+      "mcc": 0.0905,
+      "accuracy": 0.735,
       "n": 400
     },
     "club_qa": {
-      "exact_match_approx": 0.85,
+      "exact_match_approx": 0.8075,
       "n": 400
     },
     "iberbench": {
@@ -48,21 +48,21 @@
     "flores": {
       "catalan_bench_flores_en-ca": {
         "alias": "catalan_bench_flores_en-ca",
-        "bleu,none": 39.12743700591941,
-        "bleu_stderr,none": 0.8316626982456248,
-        "ter,none": 48.3364524849241,
-        "ter_stderr,none": 0.8824442694830632,
-        "chrf,none": 64.5421550504244,
-        "chrf_stderr,none": 0.6037349778871531
+        "bleu,none": 40.139012737719945,
+        "bleu_stderr,none": 0.8960570510908373,
+        "ter,none": 47.379912663755455,
+        "ter_stderr,none": 0.9629745266251583,
+        "chrf,none": 64.37195484710352,
+        "chrf_stderr,none": 0.6772176889500646
       },
       "catalan_bench_flores_ca-en": {
         "alias": "catalan_bench_flores_ca-en",
-        "bleu,none": 43.10750603492572,
-        "bleu_stderr,none": 0.9827579733820528,
-        "ter,none": 43.27988681914643,
-        "ter_stderr,none": 0.9561838872365319,
-        "chrf,none": 69.50131960466294,
-        "chrf_stderr,none": 0.6338510834947687
+        "bleu,none": 44.95385249214709,
+        "bleu_stderr,none": 1.0676872349283566,
+        "ter,none": 41.947653855222825,
+        "ter_stderr,none": 1.0272529630860046,
+        "chrf,none": 69.30793451319326,
+        "chrf_stderr,none": 0.6837400499315803
       }
     }
   }

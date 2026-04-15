@@ -1,5 +1,7 @@
 {
   "model": "gpt-5.4",
+  "params_b": null,
+  "memory_gb": null,
   "benchmarks": {
     "veritasqa": {
       "accuracy": 1.0,

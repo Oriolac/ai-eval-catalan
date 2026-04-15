@@ -1,5 +1,7 @@
 {
   "model": "bartowski/Qwen_Qwen3-14B-GGUF:Q8_0",
+  "params_b": 14.0,
+  "memory_gb": 14.9,
   "benchmarks": {
     "veritasqa": {
       "accuracy": 1.0,

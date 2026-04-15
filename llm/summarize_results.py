@@ -73,6 +73,11 @@ def extract_metrics(data: dict) -> dict:
     return metrics
 
 
+def is_cloud_model(label: str) -> bool:
+    """Return True if the model is a cloud API model (not a local GGUF)."""
+    return "GGUF" not in label and "/" not in label
+
+
 def shorten_model_label(label: str) -> str:
     """bartowski/ModelName-GGUF:Q8_0  →  ModelName"""
     import re
@@ -171,13 +176,15 @@ HTML_TEMPLATE_SRC = """\
   <thead>
     <tr>
       <th>Model</th>
+      <th>Params (mem)</th>
       {% for col in raw_cols %}<th>{{ col }}</th>{% endfor %}
     </tr>
   </thead>
   <tbody>
-    {% for label, metrics in rows %}
+    {% for row in rows %}{% set label, metrics, cloud, params_b, memory_gb = row %}
     <tr>
-      <td>{{ label }}</td>
+      <td>{% if cloud %}<b>{{ label }}</b>{% else %}{{ label }}{% endif %}</td>
+      <td>{{ row | fmt_params }}</td>
       {% for col in raw_cols %}<td>{{ metrics.get(col) | fmt }}</td>{% endfor %}
     </tr>
     {% endfor %}
@@ -189,14 +196,16 @@ HTML_TEMPLATE_SRC = """\
   <thead>
     <tr>
       <th>Model</th>
+      <th>Params (mem)</th>
       {% for col in norm_cols %}<th>{{ col }}</th>{% endfor %}
       <th>CALM%</th>
     </tr>
   </thead>
   <tbody>
-    {% for label, metrics in rows %}
+    {% for row in rows %}{% set label, metrics, cloud, params_b, memory_gb = row %}
     <tr>
-      <td>{{ label }}</td>
+      <td>{% if cloud %}<b>{{ label }}</b>{% else %}{{ label }}{% endif %}</td>
+      <td>{{ row | fmt_params }}</td>
       {% for col in norm_cols %}<td>{{ metrics.get(col) | norm(col) | fmt }}</td>{% endfor %}
       <td>{{ metrics | calm }}</td>
     </tr>
@@ -209,11 +218,12 @@ HTML_TEMPLATE_SRC = """\
 """
 
 
-def render_html(rows: list, all_metric_keys: list, norm_keys: list) -> str:
+def render_html(rows: list, all_metric_keys: list, norm_keys: list, fmt_params_fn) -> str:
     env = Environment()
     env.filters["fmt"] = fmt
     env.filters["norm"] = lambda value, key: normalize_score(key, value)
     env.filters["calm"] = lambda metrics: fmt_pct(calm_score(metrics))
+    env.filters["fmt_params"] = lambda row: fmt_params_fn(row[3], row[4])
     template = env.from_string(HTML_TEMPLATE_SRC)
     return template.render(rows=rows, raw_cols=all_metric_keys, norm_cols=norm_keys)
 
@@ -232,7 +242,9 @@ def main():
         with open(path) as f:
             data = json.load(f)
         metrics = extract_metrics(data)
-        rows.append((shorten_model_label(label), metrics))
+        params_b = data.get("params_b")
+        memory_gb = data.get("memory_gb")
+        rows.append((shorten_model_label(label), metrics, is_cloud_model(label), params_b, memory_gb))
         for k in metrics:
             if k not in all_metric_keys:
                 all_metric_keys.append(k)
@@ -244,19 +256,26 @@ def main():
     # Sort rows by CALM score descending
     rows.sort(key=lambda r: calm_score(r[1]) or -1.0, reverse=True)
 
+    def fmt_params(params_b, memory_gb) -> str:
+        if params_b is None:
+            return "—"
+        mem = f"{memory_gb:.1f}GB" if memory_gb is not None else "?"
+        return f"{params_b:.0f}B ({mem})"
+
     # ── Raw scores table ──────────────────────────────────────────────────────
     col_width = max(14, max(len(k) for k in all_metric_keys) + 2)
-    label_width = max(12, max(len(label) for label, _ in rows) + 2)
-    header = f"{'Model':<{label_width}}" + "".join(f"{k:>{col_width}}" for k in all_metric_keys)
+    params_col_w = 16
+    label_width = max(12, max(len(label) for label, _, _cloud, *_ in rows) + 2)
+    header = f"{'Model':<{label_width}}" + f"{'Params (mem)':>{params_col_w}}" + "".join(f"{k:>{col_width}}" for k in all_metric_keys)
     separator = "-" * len(header)
 
     print("\nRaw scores")
     print(separator)
     print(header)
     print(separator)
-    for label, metrics in rows:
+    for label, metrics, _cloud, params_b, memory_gb in rows:
         row = "".join(f"{fmt(metrics.get(k)):>{col_width}}" for k in all_metric_keys)
-        print(f"{label:<{label_width}}{row}")
+        print(f"{label:<{label_width}}{fmt_params(params_b, memory_gb):>{params_col_w}}{row}")
     print(separator)
 
     # ── Normalized scores + CALM composite table ──────────────────────────────
@@ -267,6 +286,7 @@ def main():
 
     norm_header = (
         f"{'Model':<{norm_label_w}}"
+        + f"{'Params (mem)':>{params_col_w}}"
         + "".join(f"{k:>{norm_col_w}}" for k in norm_keys)
         + f"{'CALM%':>{calm_col_w}}"
     )
@@ -276,17 +296,17 @@ def main():
     print(norm_sep)
     print(norm_header)
     print(norm_sep)
-    for label, metrics in rows:
+    for label, metrics, _cloud, params_b, memory_gb in rows:
         norm_row = "".join(
             f"{fmt(normalize_score(k, metrics.get(k))):>{norm_col_w}}" for k in norm_keys
         )
         calm = fmt_pct(calm_score(metrics))
-        print(f"{label:<{norm_label_w}}{norm_row}{calm:>{calm_col_w}}")
+        print(f"{label:<{norm_label_w}}{fmt_params(params_b, memory_gb):>{params_col_w}}{norm_row}{calm:>{calm_col_w}}")
     print(norm_sep)
 
     # ── HTML export ───────────────────────────────────────────────────────────
     html_path = Path(args.html)
-    html_path.write_text(render_html(rows, all_metric_keys, norm_keys), encoding="utf-8")
+    html_path.write_text(render_html(rows, all_metric_keys, norm_keys, fmt_params), encoding="utf-8")
     print(f"\nHTML saved to {html_path}")
 
 

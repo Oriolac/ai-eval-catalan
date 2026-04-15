@@ -99,7 +99,7 @@ except ImportError:
 
 def _is_gguf_model(model_name: str) -> bool:
     """Return True if model_name is a GGUF spec (repo:quantization or .gguf file)."""
-    return "GGUF" in model_name or model_name.endswith(".gguf")
+    return "GGUF" in model_name or "gguf" in model_name or model_name.endswith(".gguf")
 
 
 def _hf_tokenizer_from_gguf(model_spec: str) -> str:
@@ -111,6 +111,7 @@ def _hf_tokenizer_from_gguf(model_spec: str) -> str:
     _KNOWN = {
         "aya-expanse-8b": "CohereForAI/aya-expanse-8b",
         "EuroLLM-9B-Instruct": "utter-project/EuroLLM-9B-Instruct",
+        "BSC-LT_-_salamandra-7b-instruct-gguf": "BSC-LT/salamandra-7b-instruct",
     }
 
     repo = model_spec.rsplit(":", 1)[0]  # strip :Q8_0
@@ -682,9 +683,14 @@ def _wait_for_port(port: int, timeout: float = 300.0):
 
 
 def _is_thinking_model(model_spec: str) -> bool:
-    """Return True for models known to emit thinking tokens (e.g. Gemma-4 E4B)."""
+    """Return True for models known to emit thinking tokens (e.g. Gemma-4 E4B, Qwen3/3.5)."""
     lower = model_spec.lower()
-    return "gemma-4" in lower or "gemma4" in lower or "-e4b" in lower
+    return (
+        "gemma-4" in lower
+        or "gemma4" in lower
+        or "-e4b" in lower
+        or "qwen3" in lower  # Qwen3 and Qwen3.5 are thinking models
+    )
 
 
 @contextmanager
@@ -699,8 +705,15 @@ def llama_server_context(model_spec: str, port: int, device: str = "cpu", extra_
     else:
         repo, quant = model_spec, "Q8_0"
 
-    model_base = repo.split("/")[-1].replace("-GGUF", "")
-    filename = f"{model_base}-{quant}.gguf"
+    # Repos that use a non-bartowski filename convention.
+    _FILENAME_OVERRIDES = {
+        "RichardErkhov/BSC-LT_-_salamandra-7b-instruct-gguf": "salamandra-7b-instruct.{quant}.gguf",
+    }
+    if repo in _FILENAME_OVERRIDES:
+        filename = _FILENAME_OVERRIDES[repo].format(quant=quant)
+    else:
+        model_base = repo.split("/")[-1].replace("-GGUF", "")
+        filename = f"{model_base}-{quant}.gguf"
 
     print(f"[server] Ensuring {filename} is cached locally …", flush=True)
     cache_dir = os.path.expanduser("~/.cache/huggingface/hub")
@@ -760,8 +773,10 @@ def llama_server_context(model_spec: str, port: int, device: str = "cpu", extra_
     print(
         f"[server] Starting llama-server on port {port} (device={device}) … (log: {log_path})"
     )
+    default_server = Path(__file__).parent.parent.parent / "llama.cpp" / "build" / "bin" / "llama-server"
+    llama_server_bin = os.environ.get("LLAMA_SERVER_PATH", str(default_server))
     cmd = [
-        "/home/jupyter/llama.cpp/build/bin/llama-server",
+        llama_server_bin,
         "--model",
         local_path,
         "--port",
@@ -866,7 +881,30 @@ def main():
         default="cpu",
         help="Device for llama-server inference (default: cpu)",
     )
+    parser.add_argument(
+        "--params-b",
+        type=float,
+        default=None,
+        help="Model parameter count in billions (e.g. 7.0 for a 7B model)",
+    )
     args = parser.parse_args()
+
+    # ── Compute memory estimate ───────────────────────────────────────────────
+    def _estimate_memory_gb(params_b: float | None, model_spec: str) -> float | None:
+        """Estimate VRAM usage in GB from parameter count and quantization type."""
+        if params_b is None:
+            return None
+        # bits per parameter for common GGUF quantization levels
+        _BITS = {
+            "Q8_0": 8.5,
+            "Q4_K_M": 4.5,
+            "Q4_0": 4.5,
+            "Q5_K_M": 5.5,
+            "Q6_K": 6.5,
+        }
+        quant = model_spec.rsplit(":", 1)[-1] if ":" in model_spec else "Q8_0"
+        bits = _BITS.get(quant, 8.5)
+        return round(params_b * 1e9 * bits / 8 / 1e9, 1)
 
     run_all = "all" in args.benchmarks
     to_run = (
@@ -890,7 +928,13 @@ def main():
         model_label = args.gemini_model if args.model == "gemini" else (
             args.openai_model if args.model == "openai" else args.model
         )
-        results = {"model": model_label, "benchmarks": {}}
+        memory_gb = _estimate_memory_gb(args.params_b, args.model)
+        results = {
+            "model": model_label,
+            "params_b": args.params_b,
+            "memory_gb": memory_gb,
+            "benchmarks": {},
+        }
 
         if "veritasqa" in to_run:
             results["benchmarks"]["veritasqa"] = run_veritasqa(model, args.n_samples)

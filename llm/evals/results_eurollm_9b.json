@@ -1,5 +1,7 @@
 {
   "model": "bartowski/EuroLLM-9B-Instruct-GGUF:Q8_0",
+  "params_b": 9.0,
+  "memory_gb": 9.6,
   "benchmarks": {
     "veritasqa": {
       "accuracy": 1.0,

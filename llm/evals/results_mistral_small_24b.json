@@ -1,5 +1,7 @@
 {
   "model": "bartowski/mistralai_Mistral-Small-3.1-24B-Instruct-2503-GGUF:Q4_K_M",
+  "params_b": 24.0,
+  "memory_gb": 13.5,
   "benchmarks": {
     "veritasqa": {
       "accuracy": 1.0,

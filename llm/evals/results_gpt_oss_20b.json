@@ -1,5 +1,7 @@
 {
   "model": "bartowski/openai_gpt-oss-20b-GGUF:Q4_K_M",
+  "params_b": 20.0,
+  "memory_gb": 11.2,
   "benchmarks": {
     "veritasqa": {
       "accuracy": 1.0,

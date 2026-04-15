@@ -1,5 +1,7 @@
 {
   "model": "bartowski/google_gemma-4-26B-A4B-it-GGUF:Q8_0",
+  "params_b": 26.0,
+  "memory_gb": 27.6,
   "benchmarks": {
     "veritasqa": {
       "accuracy": 1.0,

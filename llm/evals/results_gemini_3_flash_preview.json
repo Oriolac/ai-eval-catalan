@@ -1,5 +1,7 @@
 {
   "model": "gemini-3-flash-preview",
+  "params_b": null,
+  "memory_gb": null,
   "benchmarks": {
     "veritasqa": {
       "accuracy": 1.0,

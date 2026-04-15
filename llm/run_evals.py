@@ -32,6 +32,7 @@ MODELS = [
             "cuda",
         ],
         "ram_gb": 12,
+        "params_b": 12.0,
     },
     {
         "label": "mistral-small-24b",
@@ -43,6 +44,7 @@ MODELS = [
             "cuda",
         ],
         "ram_gb": 13,
+        "params_b": 24.0,
     },
     {
         "label": "gpt-oss-20b",
@@ -54,18 +56,21 @@ MODELS = [
             "cuda",
         ],
         "ram_gb": 11,
+        "params_b": 20.0,
     },
     {
         "label": "qwen3-14b",
         "output": "evals/results_qwen3_14b.json",
         "args": ["--model", "bartowski/Qwen_Qwen3-14B-GGUF:Q8_0", "--device", "cuda"],
         "ram_gb": 14,
+        "params_b": 14.0,
     },
     {
         "label": "qwen3.5-9b",
         "output": "evals/results_qwen3.5_9b.json",
         "args": ["--model", "bartowski/Qwen_Qwen3.5-9B-GGUF:Q8_0", "--device", "cuda"],
         "ram_gb": 9,
+        "params_b": 9.0,
     },
     {
         "label": "llama3.1-8b",
@@ -77,6 +82,7 @@ MODELS = [
             "cuda",
         ],
         "ram_gb": 8,
+        "params_b": 8.0,
     },
     {
         "label": "aya-expanse-8b",
@@ -88,6 +94,7 @@ MODELS = [
             "cuda",
         ],
         "ram_gb": 8,
+        "params_b": 8.0,
     },
     {
         "label": "eurollm-9b",
@@ -99,6 +106,19 @@ MODELS = [
             "cuda",
         ],
         "ram_gb": 9,
+        "params_b": 9.0,
+    },
+    {
+        "label": "salamandra-7b",
+        "output": "evals/results_salamandra_7b.json",
+        "args": [
+            "--model",
+            "RichardErkhov/BSC-LT_-_salamandra-7b-instruct-gguf:Q8_0",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 7,
+        "params_b": 7.0,
     },
     {
         "label": "gemma4-e4b",
@@ -110,6 +130,7 @@ MODELS = [
             "cuda",
         ],
         "ram_gb": 5,
+        "params_b": 4.0,
     },
     {
         "label": "gemma4-26b-q4",
@@ -121,6 +142,7 @@ MODELS = [
             "cuda",
         ],
         "ram_gb": 14,
+        "params_b": 26.0,
     },
     {
         "label": "gemma4-26b-q8",
@@ -132,6 +154,7 @@ MODELS = [
             "cuda",
         ],
         "ram_gb": 26,
+        "params_b": 26.0,
     },
     {
         "label": "gemini-3-1-preview",
@@ -144,6 +167,7 @@ MODELS = [
         ],
         "needs_api_key": True,
         "ram_gb": 0,
+        "params_b": None,
     },
     {
         "label": "gemini-3-flash-preview",
@@ -156,6 +180,7 @@ MODELS = [
         ],
         "needs_api_key": True,
         "ram_gb": 0,
+        "params_b": None,
     },
     {
         "label": "gpt-5.4",
@@ -168,6 +193,7 @@ MODELS = [
         ],
         "needs_openai_api_key": True,
         "ram_gb": 0,
+        "params_b": None,
     },
 ]
 
@@ -229,12 +255,14 @@ def main():
             "--llama-server-port",
             str(BASE_PORT),
         ]
+        if model.get("params_b") is not None:
+            cmd += ["--params-b", str(model["params_b"])]
 
         if model.get("needs_api_key"):
             cmd += ["--api-key", google_api_key]
 
         print(f"\n[RUN] {model['label']}: {' '.join(cmd)}\n{'='*60}")
-        result = subprocess.run(cmd, cwd=SCRIPT_DIR)
+        result = subprocess.run(cmd, cwd=SCRIPT_DIR, stdin=subprocess.DEVNULL)
 
         if result.returncode != 0:
             print(f"[ERROR] {model['label']} exited with code {result.returncode}")
