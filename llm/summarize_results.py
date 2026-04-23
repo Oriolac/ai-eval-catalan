@@ -113,6 +113,20 @@ RANDOM_BASELINES = {
 
 CALM_TASKS = list(RANDOM_BASELINES.keys())
 
+COLUMN_LABELS = {
+    "model": "Model",
+    "cloud": "Cloud",
+    "params_b": "Parameters (B)",
+    "memory_gb": "Memory (GB)",
+    "sts_ca": "STS-ca",
+    "catcola_mcc": "CatCoLA MCC",
+    "club_qa_em": "CLUB QA EM",
+    "casum_rougeL": "CaSum RougeL",
+    "flores_en2ca": "Flores EN→CA",
+    "flores_ca2en": "Flores CA→EN",
+    "calm_pct": "CALM%",
+}
+
 
 def normalize_score(key: str, raw) -> float | None:
     """Normalize a raw metric to 0..1 using HF Open LLM Leaderboard v2 formula.
@@ -232,6 +246,7 @@ def main():
     parser = argparse.ArgumentParser(description="Summarize eval results")
     parser.add_argument("--results-dir", default="evals", help="Directory containing result JSONs")
     parser.add_argument("--html", default="summary.html", help="Output HTML file (default: summary.html)")
+    parser.add_argument("--json-norm", default="llms.json", help="Output JSON file for normalized scores (default: llms.json)")
     args = parser.parse_args()
 
     results_dir = Path(args.results_dir)
@@ -308,6 +323,30 @@ def main():
     html_path = Path(args.html)
     html_path.write_text(render_html(rows, all_metric_keys, norm_keys, fmt_params), encoding="utf-8")
     print(f"\nHTML saved to {html_path}")
+
+    # ── JSON export ───────────────────────────────────────────────────────────
+    json_text = {
+        "model": COLUMN_LABELS["model"],
+        "cloud": COLUMN_LABELS["cloud"],
+        "params_b": COLUMN_LABELS["params_b"],
+        "memory_gb": COLUMN_LABELS["memory_gb"],
+        **{k: COLUMN_LABELS.get(k, k) for k in norm_keys},
+        "calm_pct": COLUMN_LABELS["calm_pct"],
+    }
+    json_rows = []
+    for label, metrics, cloud, params_b, memory_gb in rows:
+        entry = {
+            "model": label,
+            "cloud": cloud,
+            "params_b": params_b,
+            "memory_gb": memory_gb,
+            **{k: round(normalize_score(k, metrics.get(k)), 4) if normalize_score(k, metrics.get(k)) is not None else None for k in norm_keys},
+            "calm_pct": round(calm_score(metrics), 2) if calm_score(metrics) is not None else None,
+        }
+        json_rows.append(entry)
+    json_path = Path(args.json_norm)
+    json_path.write_text(json.dumps({"text": json_text, "data": json_rows}, indent=4, ensure_ascii=False), encoding="utf-8")
+    print(f"Normalized JSON saved to {json_path}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,48 @@
+name: Publish llms.json to prod_data
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout llms branch
+        uses: actions/checkout@v4
+        with:
+          ref: llms
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install jinja2
+
+      - name: Generate llms.json
+        working-directory: llm
+        run: python summarize_results.py --json-norm llms.json
+
+      - name: Checkout prod_data branch
+        uses: actions/checkout@v4
+        with:
+          ref: prod_data
+          path: prod_data_branch
+
+      - name: Copy llms.json to prod_data
+        run: cp llm/llms.json prod_data_branch/llms.json
+
+      - name: Commit and push
+        working-directory: prod_data_branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add llms.json
+          git diff --cached --quiet || git commit -m "Update llms.json from llms@${{ github.sha }}"
+          git push
