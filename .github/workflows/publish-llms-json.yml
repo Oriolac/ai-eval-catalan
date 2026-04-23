@@ -12,10 +12,8 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout llms branch
+      - name: Checkout main branch
         uses: actions/checkout@v4
-        with:
-          ref: llms
 
       - name: Set up Python
         uses: actions/setup-python@v5
