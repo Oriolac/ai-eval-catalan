@@ -73,6 +73,13 @@ MODELS = [
         "params_b": 9.0,
     },
     {
+        "label": "qwen3.6-27b",
+        "output": "evals/results_qwen3.6_27b.json",
+        "args": ["--model", "unsloth/Qwen3.6-27B-GGUF:Q8_0", "--device", "cuda"],
+        "ram_gb": 27,
+        "params_b": 27.0,
+    },
+    {
         "label": "llama3.1-8b",
         "output": "evals/results_llama3.1_8b.json",
         "args": [
