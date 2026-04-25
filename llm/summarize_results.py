@@ -89,6 +89,8 @@ def shorten_model_label(label: str) -> str:
     name = name.split(":")[0]
     # Strip "-GGUF" / "-guff" suffix (case-insensitive)
     name = re.sub(r"-GGUF$", "", name, flags=re.IGNORECASE)
+    # Strip redundant "Qwen_" prefix (bartowski uses org_model naming)
+    name = re.sub(r"^Qwen_", "", name)
     # Strip "-Instruct" and trailing version numbers
     name = re.sub(r"-Instruct(?:-\d+)?$", "", name)
     # For gemma-4 models, append quantization suffix for clarity
