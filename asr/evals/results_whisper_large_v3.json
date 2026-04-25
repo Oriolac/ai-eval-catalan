@@ -1,0 +1,11 @@
+{
+  "model": "whisper-large-v3",
+  "benchmarks": {
+    "fleurs_ca": {
+      "wer": 0.0441,
+      "cer": 0.0146,
+      "rtf": 0.1659,
+      "n": 200
+    }
+  }
+}

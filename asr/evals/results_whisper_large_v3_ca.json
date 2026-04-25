@@ -1,0 +1,11 @@
+{
+  "model": "projecte-aina/whisper-large-v3-ca-3catparla",
+  "benchmarks": {
+    "fleurs_ca": {
+      "wer": 0.0633,
+      "cer": 0.034,
+      "rtf": 0.161,
+      "n": 200
+    }
+  }
+}

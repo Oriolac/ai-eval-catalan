@@ -1,0 +1,11 @@
+{
+  "model": "whisper-large-v3-turbo",
+  "benchmarks": {
+    "fleurs_ca": {
+      "wer": 0.0476,
+      "cer": 0.0153,
+      "rtf": 0.0343,
+      "n": 200
+    }
+  }
+}

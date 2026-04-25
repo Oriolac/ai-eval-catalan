@@ -1,0 +1,155 @@
+"""
+Orchestrator script: runs hf-eval.py for each ASR model, skipping those
+whose output JSON already exists.
+
+Usage:
+  python run_evals.py
+  python run_evals.py --num_samples 500
+  python run_evals.py --device cuda
+"""
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).parent
+
+MODELS = [
+    {
+        "label": "whisper-tiny",
+        "args": ["whisper-tiny"],
+        "output": "evals/results_whisper_tiny.json",
+    },
+    {
+        "label": "whisper-base",
+        "args": ["whisper-base"],
+        "output": "evals/results_whisper_base.json",
+    },
+    {
+        "label": "whisper-small",
+        "args": ["whisper-small"],
+        "output": "evals/results_whisper_small.json",
+    },
+    {
+        "label": "whisper-medium",
+        "args": ["whisper-medium"],
+        "output": "evals/results_whisper_medium.json",
+    },
+    {
+        "label": "whisper-large-v3",
+        "args": ["whisper-large-v3"],
+        "output": "evals/results_whisper_large_v3.json",
+    },
+    {
+        "label": "whisper-large-v3-turbo",
+        "args": ["whisper-large-v3-turbo"],
+        "output": "evals/results_whisper_large_v3_turbo.json",
+    },
+    {
+        "label": "whisper-large-v3-ca",
+        "args": ["projecte-aina/whisper-large-v3-ca-3catparla"],
+        "output": "evals/results_whisper_large_v3_ca.json",
+    },
+    {
+        "label": "omniASR_CTC_300M",
+        "args": ["omniASR_CTC_300M"],
+        "output": "evals/results_omni_ctc_300m.json",
+    },
+    {
+        "label": "omniASR_CTC_1B",
+        "args": ["omniASR_CTC_1B"],
+        "output": "evals/results_omni_ctc_1b.json",
+    },
+    {
+        "label": "omniASR_CTC_3B",
+        "args": ["omniASR_CTC_3B"],
+        "output": "evals/results_omni_ctc_3b.json",
+    },
+    {
+        "label": "omniASR_CTC_7B",
+        "args": ["omniASR_CTC_7B"],
+        "output": "evals/results_omni_ctc_7b.json",
+    },
+    {
+        "label": "omniASR_LLM_300M",
+        "args": ["omniASR_LLM_300M"],
+        "output": "evals/results_omni_llm_300m.json",
+    },
+    {
+        "label": "omniASR_LLM_1B",
+        "args": ["omniASR_LLM_1B"],
+        "output": "evals/results_omni_llm_1b.json",
+    },
+    {
+        "label": "omniASR_LLM_3B",
+        "args": ["omniASR_LLM_3B"],
+        "output": "evals/results_omni_llm_3b.json",
+    },
+    {
+        "label": "omniASR_LLM_7B",
+        "args": ["omniASR_LLM_7B"],
+        "output": "evals/results_omni_llm_7b.json",
+    },
+    {
+        "label": "vibevoice",
+        "args": ["microsoft/VibeVoice-ASR"],
+        "output": "evals/results_vibevoice.json",
+    },
+    {
+        "label": "gemma-4-E4B",
+        "args": ["gemma-4-E4B"],
+        "output": "evals/results_gemma4_e4b.json",
+    },
+    {
+        "label": "gemma-4-E2B",
+        "args": ["gemma-4-E2B"],
+        "output": "evals/results_gemma4_e2b.json",
+    },
+]
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Run ASR evals for all models")
+    parser.add_argument("--num_samples", type=int, default=200)
+    parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
+    args = parser.parse_args()
+
+    python = sys.executable
+
+    for model in MODELS:
+        output_path = SCRIPT_DIR / model["output"]
+
+        if output_path.exists():
+            print(f"[SKIP] {model['label']} — {output_path} already exists")
+            continue
+
+        cmd = [
+            python,
+            "-u",
+            "hf-eval.py",
+            *model["args"],
+            "--device",
+            args.device,
+            "--num_samples",
+            str(args.num_samples),
+            "--output",
+            model["output"],
+        ]
+
+        print(f"\n[RUN] {model['label']}: {' '.join(cmd)}\n{'='*60}")
+        result = subprocess.run(cmd, cwd=SCRIPT_DIR, stdin=subprocess.DEVNULL)
+
+        if result.returncode != 0:
+            print(f"[ERROR] {model['label']} exited with code {result.returncode}")
+        else:
+            print(f"[DONE] {model['label']} -> {output_path}")
+            subprocess.run(
+                [python, "summarize_results.py"],
+                cwd=SCRIPT_DIR,
+                stdin=subprocess.DEVNULL,
+            )
+
+
+if __name__ == "__main__":
+    main()

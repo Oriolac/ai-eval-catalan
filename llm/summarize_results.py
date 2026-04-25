@@ -118,12 +118,12 @@ COLUMN_LABELS = {
     "cloud": "Cloud",
     "params_b": "Parameters (B)",
     "memory_gb": "Memory (GB)",
-    "sts_ca": "STS-ca",
+    "sts_ca": "STS",
     "catcola_mcc": "CatCoLA MCC",
-    "club_qa_em": "CLUB QA EM",
-    "casum_rougeL": "CaSum RougeL",
-    "flores_en2ca": "Flores EN→CA",
-    "flores_ca2en": "Flores CA→EN",
+    "club_qa_em": "CLUB QA",
+    "casum_rougeL": "CaSum",
+    "flores_en2ca": "EN→CA",
+    "flores_ca2en": "CA→EN",
     "calm_pct": "CALM%",
 }
 
@@ -242,11 +242,23 @@ def render_html(rows: list, all_metric_keys: list, norm_keys: list, fmt_params_f
     return template.render(rows=rows, raw_cols=all_metric_keys, norm_cols=norm_keys)
 
 
+def render_table(rows: list, norm_keys: list, fmt_params_fn, template_path: Path) -> str:
+    from jinja2 import FileSystemLoader
+    env = Environment(loader=FileSystemLoader(str(template_path.parent)))
+    env.filters["fmt"] = fmt
+    env.filters["norm"] = lambda value, key: normalize_score(key, value)
+    env.filters["calm"] = lambda metrics: fmt_pct(calm_score(metrics))
+    env.filters["fmt_params"] = lambda row: fmt_params_fn(row[3], row[4])
+    template = env.get_template(template_path.name)
+    return template.render(rows=rows, norm_cols=norm_keys, col_labels=COLUMN_LABELS)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Summarize eval results")
     parser.add_argument("--results-dir", default="evals", help="Directory containing result JSONs")
     parser.add_argument("--html", default="summary.html", help="Output HTML file (default: summary.html)")
     parser.add_argument("--json-norm", default="llms.json", help="Output JSON file for normalized scores (default: llms.json)")
+    parser.add_argument("--table-out", default="llms_table.html", help="Output file for the rendered table snippet (default: llms_table.html)")
     args = parser.parse_args()
 
     results_dir = Path(args.results_dir)
@@ -323,6 +335,15 @@ def main():
     html_path = Path(args.html)
     html_path.write_text(render_html(rows, all_metric_keys, norm_keys, fmt_params), encoding="utf-8")
     print(f"\nHTML saved to {html_path}")
+
+    # ── Table snippet export ──────────────────────────────────────────────────
+    table_template_path = Path(__file__).parent / "table_template.jinja"
+    if table_template_path.exists():
+        table_out = Path(args.table_out)
+        table_out.write_text(render_table(rows, norm_keys, fmt_params, table_template_path), encoding="utf-8")
+        print(f"Table snippet saved to {table_out}")
+    else:
+        print(f"Table template {table_template_path} not found, skipping table snippet.")
 
     # ── JSON export ───────────────────────────────────────────────────────────
     json_text = {

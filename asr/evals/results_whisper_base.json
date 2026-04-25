@@ -1,0 +1,11 @@
+{
+  "model": "whisper-base",
+  "benchmarks": {
+    "fleurs_ca": {
+      "wer": 0.2431,
+      "cer": 0.0793,
+      "rtf": 0.0414,
+      "n": 200
+    }
+  }
+}

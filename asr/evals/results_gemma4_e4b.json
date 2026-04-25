@@ -1,0 +1,11 @@
+{
+  "model": "gemma-4-E4B",
+  "benchmarks": {
+    "fleurs_ca": {
+      "wer": 0.2385,
+      "cer": 0.199,
+      "rtf": 0.3284,
+      "n": 200
+    }
+  }
+}
