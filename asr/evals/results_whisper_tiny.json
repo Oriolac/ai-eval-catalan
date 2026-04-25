@@ -1,5 +1,7 @@
 {
   "model": "whisper-tiny",
+  "params_b": 0.039,
+  "memory_gb": 0.08,
   "benchmarks": {
     "fleurs_ca": {
       "wer": 0.3806,

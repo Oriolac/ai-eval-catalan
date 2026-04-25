@@ -23,13 +23,18 @@ jobs:
       - name: Install dependencies
         run: pip install jinja2
 
-      - name: Generate llms.json and llms_table.html
+      - name: Generate llms.json
         working-directory: llm
-        run: python summarize_results.py --json-norm llms.json --table-out llms_table.html
+        run: python summarize_results.py --json-norm llms.json
 
-      - name: Generate asrs.json and asrs_table.html
+      - name: Generate asrs.json
         working-directory: asr
-        run: python summarize_results.py --json-out asrs.json --table-out asrs_table.html
+        run: python summarize_results.py --json-out asrs.json
+
+      - name: Generate table and bar chart HTML
+        run: |
+          python render_tables.py
+          python render_bar_charts.py
 
       - name: Checkout prod-data branch
         uses: actions/checkout@v4
@@ -41,14 +46,16 @@ jobs:
         run: |
           cp llm/llms.json prod_data_branch/llms.json
           cp llm/llms_table.html prod_data_branch/llms_table.html
+          cp llm/llms_bar.html prod_data_branch/llms_bar.html
           cp asr/asrs.json prod_data_branch/asrs.json
           cp asr/asrs_table.html prod_data_branch/asrs_table.html
+          cp asr/asrs_bar.html prod_data_branch/asrs_bar.html
 
       - name: Commit and push to prod-data
         working-directory: prod_data_branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add llms.json llms_table.html asrs.json asrs_table.html
-          git diff --cached --quiet || git commit -m "Update llms.json, llms_table.html, asrs.json, asrs_table.html from ${{ github.ref_name }}@${{ github.sha }}"
+          git add llms.json llms_table.html llms_bar.html asrs.json asrs_table.html asrs_bar.html
+          git diff --cached --quiet || git commit -m "Update llms.json, llms_table.html, llms_bar.html, asrs.json, asrs_table.html, asrs_bar.html from ${{ github.ref_name }}@${{ github.sha }}"
           git push

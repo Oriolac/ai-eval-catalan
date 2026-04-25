@@ -152,7 +152,7 @@ class VibeVoiceWrapper:
         self.model = VibeVoiceASRForConditionalGeneration.from_pretrained(
             model_name,
             dtype=torch.bfloat16,
-            attn_implementation="sdpa",
+            attn_implementation="eager",
             trust_remote_code=True,
         ).to(device)
         self.model.eval()

@@ -1,5 +1,7 @@
 {
   "model": "whisper-base",
+  "params_b": 0.074,
+  "memory_gb": 0.15,
   "benchmarks": {
     "fleurs_ca": {
       "wer": 0.2431,

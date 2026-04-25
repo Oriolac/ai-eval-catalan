@@ -11,11 +11,13 @@ import argparse
 import json
 from pathlib import Path
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment
 
 
 COLUMN_LABELS = {
     "model": "Model",
+    "params_b": "Parameters (B)",
+    "memory_gb": "Memory (GB)",
     "wer": "WER",
     "cer": "CER",
     "rtf": "RTF",
@@ -33,6 +35,8 @@ def load_results(results_dir: Path) -> list[dict]:
             fleurs = data.get("benchmarks", {}).get("fleurs_ca", {})
             rows.append({
                 "model": data.get("model", path.stem),
+                "params_b": data.get("params_b"),
+                "memory_gb": data.get("memory_gb"),
                 "wer": fleurs.get("wer"),
                 "cer": fleurs.get("cer"),
                 "rtf": fleurs.get("rtf"),
@@ -49,17 +53,9 @@ def fmt(value, digits=4) -> str:
     return f"{value:.{digits}f}"
 
 
-def render_table(rows: list, template_path: Path) -> str:
-    env = Environment(loader=FileSystemLoader(str(template_path.parent)))
-    env.filters["fmt"] = fmt
-    template = env.get_template(template_path.name)
-    return template.render(rows=rows, cols=METRICS, col_labels=COLUMN_LABELS)
-
-
 def main():
     parser = argparse.ArgumentParser(description="Summarize ASR eval results")
     parser.add_argument("--results-dir", default="evals")
-    parser.add_argument("--table-out", "--html", default="asrs_table.html", dest="table_out")
     parser.add_argument("--json-out", default="asrs.json")
     args = parser.parse_args()
 
@@ -85,20 +81,13 @@ def main():
         print(f"{r['model']:<{label_w}}{fmt(r['wer']):>10}{fmt(r['cer']):>10}{fmt(r['rtf']):>10}{rt:>12}{n:>6}")
     print(sep)
 
-    # ── HTML table snippet ────────────────────────────────────────────────────
-    template_path = Path(__file__).parent / "table_template.jinja"
-    if template_path.exists():
-        table_out = Path(args.table_out)
-        table_out.write_text(render_table(rows, template_path), encoding="utf-8")
-        print(f"Table snippet saved to {table_out}")
-    else:
-        print(f"Table template {template_path} not found, skipping.")
-
     # ── JSON export ───────────────────────────────────────────────────────────
-    json_text = {k: COLUMN_LABELS.get(k, k) for k in ["model"] + METRICS}
+    json_text = {k: COLUMN_LABELS.get(k, k) for k in ["model", "params_b", "memory_gb"] + METRICS}
     json_rows = [
         {
             "model": r["model"],
+            "params_b": r.get("params_b"),
+            "memory_gb": r.get("memory_gb"),
             **{k: round(r[k], 4) if r.get(k) is not None else None for k in METRICS},
         }
         for r in rows

@@ -1,5 +1,7 @@
 {
   "model": "whisper-large-v3-turbo",
+  "params_b": 0.809,
+  "memory_gb": 1.62,
   "benchmarks": {
     "fleurs_ca": {
       "wer": 0.0476,

@@ -1,5 +1,7 @@
 {
   "model": "gemma-4-E4B",
+  "params_b": 4.5,
+  "memory_gb": 9.0,
   "benchmarks": {
     "fleurs_ca": {
       "wer": 0.2385,

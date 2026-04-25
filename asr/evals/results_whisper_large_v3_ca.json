@@ -1,5 +1,7 @@
 {
   "model": "projecte-aina/whisper-large-v3-ca-3catparla",
+  "params_b": 1.55,
+  "memory_gb": 3.1,
   "benchmarks": {
     "fleurs_ca": {
       "wer": 0.0633,
