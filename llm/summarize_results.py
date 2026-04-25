@@ -87,8 +87,8 @@ def shorten_model_label(label: str) -> str:
     name = label.split("/")[-1]
     # Strip quantization suffix (e.g. ":Q8_0")
     name = name.split(":")[0]
-    # Strip "-GGUF" suffix
-    name = re.sub(r"-GGUF$", "", name)
+    # Strip "-GGUF" / "-guff" suffix (case-insensitive)
+    name = re.sub(r"-GGUF$", "", name, flags=re.IGNORECASE)
     # Strip "-Instruct" and trailing version numbers
     name = re.sub(r"-Instruct(?:-\d+)?$", "", name)
     # For gemma-4 models, append quantization suffix for clarity
