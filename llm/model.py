@@ -604,7 +604,11 @@ def run_flores(
         os.environ["OPENAI_BASE_URL"] = _gemini_base_url
     elif openai_model:
         lm_model = "openai-chat-completions"
-        lm_model_args = f"model={openai_model}"
+        lm_model_args = ( 
+            f"model={openai_model},"
+            f"base_url={base_url}/chat/completions,"
+            f"num_concurrent=1,max_retries=3,tokenized_requests=False"
+        )
     elif base_url:
         tok = tokenizer or model_name
         lm_model = "local-chat-completions"
@@ -646,7 +650,6 @@ def run_flores(
                 os.environ.pop("OPENAI_BASE_URL", None)
             else:
                 os.environ["OPENAI_BASE_URL"] = _orig_base_url
-
     scores = {
         task: results["results"][task]
         for task in flores_tasks
@@ -1000,7 +1003,7 @@ def main():
             model_name=args.openai_model,
             base_url=args.openai_base_url,
         )
-        results = _run_benchmarks(model)
+        results = _run_benchmarks(model,args.openai_base_url)
     else:
         server_extra = ["--reasoning", "off"] if _is_thinking_model(args.model) else None
         with llama_server_context(
