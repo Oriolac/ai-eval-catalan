@@ -190,13 +190,13 @@ MODELS = [
         "params_b": None,
     },
     {
-        "label": "gpt-5.4",
-        "output": "evals/results_gpt_5_4.json",
+        "label": "gpt-5.5",
+        "output": "evals/results_gpt_5_5.json",
         "args": [
             "--model",
             "openai",
             "--openai-model",
-            "gpt-5.4",
+            "gpt-5.5",
         ],
         "needs_openai_api_key": True,
         "ram_gb": 0,

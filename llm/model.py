@@ -242,19 +242,24 @@ class OpenAIModel:
 
     def __init__(self, api_key: str, model_name: str, base_url: str | None = None):
         from openai import OpenAI
+        import re
 
         self.model_name = model_name
         self.client = OpenAI(api_key=api_key, base_url=base_url)
+        # gpt-5.x series only supports default temperature (1)
+        self._supports_temperature = not re.match(r"gpt-5\.", model_name)
 
     def generate(self, prompt: str, max_new_tokens: int = 256) -> str:
         effective_tokens = max(max_new_tokens, 1024)
         try:
-            response = self.client.chat.completions.create(
+            kwargs = dict(
                 model=self.model_name,
                 messages=[{"role": "user", "content": prompt}],
                 max_completion_tokens=effective_tokens,
-                temperature=0,
             )
+            if self._supports_temperature:
+                kwargs["temperature"] = 0
+            response = self.client.chat.completions.create(**kwargs)
             return (response.choices[0].message.content or "").strip()
         except Exception as e:
             print(f"[error] API call failed: {e}")
