@@ -33,7 +33,11 @@ def fmt_params(row) -> str:
     if params_b is None:
         return "—"
     mem = f"{memory_gb:.1f}GB" if memory_gb is not None else "?"
-    return f"{params_b:.0f}B ({mem})"
+    if params_b < 1:
+        size = f"{params_b * 1000:.0f}M"
+    else:
+        size = f"{params_b:.0f}B"
+    return f"{size} ({mem})"
 
 
 def render(json_path: Path, template_path: Path, out: Path) -> None:
