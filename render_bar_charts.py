@@ -69,11 +69,11 @@ def build_claim_chart(data: list[dict]) -> dict:
         })
 
     return {
-        "title": "CLAIM % — LLMs on Catalan",
+        "title": "CLAIM % — LLMs en català",
         "subtitle": "50% usable",
         "threshold_pct": threshold_pct,
-        "threshold_label": "50% usable",
-        "caption": "Línia discontínua al 50% = \"utilitzable per a tasques en català\"",
+        "threshold_label": "> 50% el considerem usable",
+        "caption": "Línia discontínua al 50% = \"usable per a tasques en català\"",
         "rows": rows,
     }
 
