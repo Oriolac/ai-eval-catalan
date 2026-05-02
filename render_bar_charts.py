@@ -1,5 +1,5 @@
 """
-Render ranked-bar-chart HTML from llms.json (CLAIM%) and asrs.json (WER).
+Render ranked-bar-chart HTML from llms.json (CLAM%) and asrs.json (WER).
 
 Usage:
   python render_bar_charts.py
@@ -13,7 +13,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 
-# Color thresholds for CLAIM% (higher = better)
+# Color thresholds for CLAM% (higher = better)
 def claim_color(pct: float) -> str:
     if pct >= 50:
         return "#388e3c"   # green
@@ -69,7 +69,7 @@ def build_claim_chart(data: list[dict]) -> dict:
         })
 
     return {
-        "title": "CLAIM % — LLMs en català",
+        "title": "CLAM % — LLMs en català",
         "subtitle": "50% usable",
         "threshold_pct": threshold_pct,
         "threshold_label": "> 50% el considerem usable",
