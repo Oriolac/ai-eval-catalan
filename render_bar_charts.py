@@ -14,7 +14,7 @@ from jinja2 import Environment, FileSystemLoader
 
 
 # Color thresholds for CLAM% (higher = better)
-def claim_color(pct: float) -> str:
+def clam_color(pct: float) -> str:
     if pct >= 50:
         return "#388e3c"   # green
     if pct >= 40:
@@ -51,20 +51,20 @@ def shorten_llm_label(model: str) -> str:
     return model
 
 
-def build_claim_chart(data: list[dict]) -> dict:
-    max_val = max(r["calm_pct"] for r in data if r["calm_pct"] is not None)
+def build_clam_chart(data: list[dict]) -> dict:
+    max_val = max(r["clam_pct"] for r in data if r["clam_pct"] is not None)
     threshold = 50.0          # "usable for Catalan tasks"
     threshold_pct = (threshold / max_val) * 100
 
     rows = []
     for r in data:
-        if r["calm_pct"] is None:
+        if r["clam_pct"] is None:
             continue
-        pct = r["calm_pct"]
+        pct = r["clam_pct"]
         rows.append({
             "label": shorten_llm_label(r["model"]),
             "bar_pct": (pct / max_val) * 100,
-            "color": claim_color(pct),
+            "color": clam_color(pct),
             "display": f"{pct:.1f}%",
         })
 
@@ -124,7 +124,7 @@ def main():
     template = env.get_template(template_path.name)
 
     llm_data = json.loads(Path(args.llm_json).read_text())["data"]
-    render(template, [build_claim_chart(llm_data)], Path(args.llm_out))
+    render(template, [build_clam_chart(llm_data)], Path(args.llm_out))
 
     asr_data = json.loads(Path(args.asr_json).read_text())["data"]
     render(template, [build_wer_chart(asr_data)], Path(args.asr_out))
