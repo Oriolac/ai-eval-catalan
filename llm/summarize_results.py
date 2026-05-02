@@ -113,7 +113,7 @@ RANDOM_BASELINES = {
     "flores_ca2en":    0.0,   # BLEU/100 → 0..1
 }
 
-CALM_TASKS = list(RANDOM_BASELINES.keys())
+CLAM_TASKS = list(RANDOM_BASELINES.keys())
 
 COLUMN_LABELS = {
     "model": "Model",
@@ -126,7 +126,7 @@ COLUMN_LABELS = {
     "casum_rougeL": "CaSum",
     "flores_en2ca": "EN→CA",
     "flores_ca2en": "CA→EN",
-    "calm_pct": "CALM%",
+    "clam_pct": "CLAM%",
 }
 
 
@@ -148,9 +148,9 @@ def normalize_score(key: str, raw) -> float | None:
     return max(0.0, min(1.0, normalized))
 
 
-def calm_score(metrics: dict) -> float | None:
-    """Compute CALM composite score (0–100) as mean of normalized task scores."""
-    normalized = [normalize_score(k, metrics.get(k)) for k in CALM_TASKS]
+def clam_score(metrics: dict) -> float | None:
+    """Compute CLAM composite score (0–100) as mean of normalized task scores."""
+    normalized = [normalize_score(k, metrics.get(k)) for k in CLAM_TASKS]
     valid = [v for v in normalized if v is not None]
     if not valid:
         return None
@@ -207,14 +207,14 @@ HTML_TEMPLATE_SRC = """\
   </tbody>
 </table>
 
-<h2>Normalized scores (HF Open LLM v2) + CALM composite</h2>
+<h2>Normalized scores (HF Open LLM v2) + CLAM composite</h2>
 <table>
   <thead>
     <tr>
       <th>Model</th>
       <th>Params (mem)</th>
       {% for col in norm_cols %}<th>{{ col }}</th>{% endfor %}
-      <th>CALM%</th>
+      <th>CLAM%</th>
     </tr>
   </thead>
   <tbody>
@@ -223,7 +223,7 @@ HTML_TEMPLATE_SRC = """\
       <td>{% if cloud %}<b>{{ label }}</b>{% else %}{{ label }}{% endif %}</td>
       <td>{{ row | fmt_params }}</td>
       {% for col in norm_cols %}<td>{{ metrics.get(col) | norm(col) | fmt }}</td>{% endfor %}
-      <td>{{ metrics | calm }}</td>
+      <td>{{ metrics | clam }}</td>
     </tr>
     {% endfor %}
   </tbody>
@@ -238,7 +238,7 @@ def render_html(rows: list, all_metric_keys: list, norm_keys: list, fmt_params_f
     env = Environment()
     env.filters["fmt"] = fmt
     env.filters["norm"] = lambda value, key: normalize_score(key, value)
-    env.filters["calm"] = lambda metrics: fmt_pct(calm_score(metrics))
+    env.filters["clam"] = lambda metrics: fmt_pct(clam_score(metrics))
     env.filters["fmt_params"] = lambda row: fmt_params_fn(row[3], row[4])
     template = env.from_string(HTML_TEMPLATE_SRC)
     return template.render(rows=rows, raw_cols=all_metric_keys, norm_cols=norm_keys)
@@ -270,8 +270,8 @@ def main():
         print("No result files found.")
         return
 
-    # Sort rows by CALM score descending
-    rows.sort(key=lambda r: calm_score(r[1]) or -1.0, reverse=True)
+    # Sort rows by CLAM score descending
+    rows.sort(key=lambda r: clam_score(r[1]) or -1.0, reverse=True)
 
     def fmt_params(params_b, memory_gb) -> str:
         if params_b is None:
@@ -295,21 +295,21 @@ def main():
         print(f"{label:<{label_width}}{fmt_params(params_b, memory_gb):>{params_col_w}}{row}")
     print(separator)
 
-    # ── Normalized scores + CALM composite table ──────────────────────────────
-    norm_keys = [k for k in CALM_TASKS if k in all_metric_keys]
+    # ── Normalized scores + CLAM composite table ──────────────────────────────
+    norm_keys = [k for k in CLAM_TASKS if k in all_metric_keys]
     norm_col_w = max(14, max(len(k) for k in norm_keys) + 2)
-    calm_col_w = 10
+    clam_col_w = 10
     norm_label_w = label_width
 
     norm_header = (
         f"{'Model':<{norm_label_w}}"
         + f"{'Params (mem)':>{params_col_w}}"
         + "".join(f"{k:>{norm_col_w}}" for k in norm_keys)
-        + f"{'CALM%':>{calm_col_w}}"
+        + f"{'CLAM%':>{clam_col_w}}"
     )
     norm_sep = "-" * len(norm_header)
 
-    print("\nNormalized scores (HF Open LLM v2) + CALM composite")
+    print("\nNormalized scores (HF Open LLM v2) + CLAM composite")
     print(norm_sep)
     print(norm_header)
     print(norm_sep)
@@ -317,8 +317,8 @@ def main():
         norm_row = "".join(
             f"{fmt(normalize_score(k, metrics.get(k))):>{norm_col_w}}" for k in norm_keys
         )
-        calm = fmt_pct(calm_score(metrics))
-        print(f"{label:<{norm_label_w}}{fmt_params(params_b, memory_gb):>{params_col_w}}{norm_row}{calm:>{calm_col_w}}")
+        clam = fmt_pct(clam_score(metrics))
+        print(f"{label:<{norm_label_w}}{fmt_params(params_b, memory_gb):>{params_col_w}}{norm_row}{clam:>{clam_col_w}}")
     print(norm_sep)
 
     # ── HTML export ───────────────────────────────────────────────────────────
@@ -333,7 +333,7 @@ def main():
         "params_b": COLUMN_LABELS["params_b"],
         "memory_gb": COLUMN_LABELS["memory_gb"],
         **{k: COLUMN_LABELS.get(k, k) for k in norm_keys},
-        "calm_pct": COLUMN_LABELS["calm_pct"],
+        "clam_pct": COLUMN_LABELS["clam_pct"],
     }
     json_rows = []
     for label, metrics, cloud, params_b, memory_gb in rows:
@@ -343,7 +343,7 @@ def main():
             "params_b": params_b,
             "memory_gb": memory_gb,
             **{k: round(normalize_score(k, metrics.get(k)), 4) if normalize_score(k, metrics.get(k)) is not None else None for k in norm_keys},
-            "calm_pct": round(calm_score(metrics), 2) if calm_score(metrics) is not None else None,
+            "clam_pct": round(clam_score(metrics), 2) if clam_score(metrics) is not None else None,
         }
         json_rows.append(entry)
     json_path = Path(args.json_norm)
