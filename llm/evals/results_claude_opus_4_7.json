@@ -30,7 +30,24 @@
       "note": "requires llama-server model (log-prob tasks)"
     },
     "flores": {
-      "error": "lm_eval not installed"
+      "catalan_bench_flores_en-ca": {
+        "alias": "catalan_bench_flores_en-ca",
+        "bleu,none": 46.89736476666792,
+        "bleu_stderr,none": 0.8827495803421378,
+        "ter,none": 40.642545227698065,
+        "ter_stderr,none": 0.8312827882640321,
+        "chrf,none": 69.48778328974007,
+        "chrf_stderr,none": 0.602074721799856
+      },
+      "catalan_bench_flores_ca-en": {
+        "alias": "catalan_bench_flores_ca-en",
+        "bleu,none": 67.31760752976562,
+        "bleu_stderr,none": 1.1614903631677738,
+        "ter,none": 23.673661872199954,
+        "ter_stderr,none": 0.997462957059673,
+        "chrf,none": 82.48917966564544,
+        "chrf_stderr,none": 0.7212107996304015
+      }
     }
   }
 }

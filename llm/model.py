@@ -17,6 +17,9 @@ Usage:
   # With the Google AI API (Gemma 4):
   python model.py --model "gemini" --api-key "YOUR_KEY"
 
+  # With Claude via OpenRouter:
+  python model.py --model "claude" --api-key "YOUR_OPENROUTER_KEY" --openai-model "anthropic/claude-opus-4-7"
+
   # Run only specific benchmarks:
   python model.py --model "bartowski/Llama-3.2-3B-Instruct-GGUF:Q8_0" --benchmarks catcola flores
 """
@@ -149,46 +152,6 @@ class GeminiModel:
         return 0  # fallback
 
 
-class ClaudeBedrockModel:
-    """Anthropic Claude via AWS Bedrock using bearer token auth (Converse API)."""
-
-    def __init__(self, model_name: str = "global.anthropic.claude-sonnet-4-6"):
-        import urllib.request, urllib.error
-        self.model_name = model_name
-        self.token = os.environ["AWS_BEARER_TOKEN_BEDROCK"]
-        self.region = os.environ.get("AWS_REGION", "us-east-1")
-        self._url = f"https://bedrock-runtime.{self.region}.amazonaws.com/model/{model_name}/converse"
-        self._urllib = urllib.request
-        self._urllib_error = urllib.error
-
-    def generate(self, prompt: str, max_new_tokens: int = 256) -> str:
-        effective_tokens = max(max_new_tokens, 1024)
-        body = json.dumps({
-            "messages": [{"role": "user", "content": [{"text": prompt}]}],
-            "inferenceConfig": {"maxTokens": effective_tokens},
-        }).encode()
-        req = self._urllib.Request(
-            self._url,
-            data=body,
-            headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"},
-            method="POST",
-        )
-        try:
-            with self._urllib.urlopen(req) as resp:
-                data = json.loads(resp.read())
-            return data["output"]["message"]["content"][0]["text"].strip()
-        except Exception as e:
-            print(f"[error] API call failed: {e}")
-            time.sleep(2)
-            return ""
-
-    def score_options(self, prompt: str, options: list[str]) -> int:
-        answer = self.generate(prompt + "\nAnswer with only A, B, C, or D.")
-        for i, opt in enumerate(options):
-            if opt.strip().lower() in answer.lower():
-                return i
-        return 0
-
 
 class OpenAIModel:
     """OpenAI-compatible API wrapper (works with OpenAI and OpenRouter)."""
@@ -201,6 +164,9 @@ class OpenAIModel:
         self.client = OpenAI(api_key=api_key, base_url=base_url)
         # gpt-5.x series only supports default temperature (1)
         self._supports_temperature = not re.match(r"gpt-5\.", model_name)
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
+        self.total_cost: float | None = None  # None until first response with cost data
 
     def generate(self, prompt: str, max_new_tokens: int = 256) -> str:
         effective_tokens = max(max_new_tokens, 1024)
@@ -213,6 +179,13 @@ class OpenAIModel:
             if self._supports_temperature:
                 kwargs["temperature"] = 0
             response = self.client.chat.completions.create(**kwargs)
+            if response.usage:
+                self.prompt_tokens += response.usage.prompt_tokens
+                self.completion_tokens += response.usage.completion_tokens
+                # OpenRouter returns cost directly in usage
+                call_cost = getattr(response.usage, "cost", None)
+                if call_cost is not None:
+                    self.total_cost = (self.total_cost or 0.0) + call_cost
             return (response.choices[0].message.content or "").strip()
         except Exception as e:
             print(f"[error] API call failed: {e}")
@@ -537,17 +510,21 @@ def run_flores(
     openai_model: str | None = None,
     gemini_model: str | None = None,
     gemini_api_key: str | None = None,
+    openrouter_model: str | None = None,
+    openrouter_api_key: str | None = None,
 ) -> dict:
     """
     Translation evaluation on FLORES+ devtest split via lm-evaluation-harness.
     Tests: English → Catalan and Catalan → English.
     Metric: BLEU, TER, chrF (computed by lm-eval).
-    Supports llama-server (via base_url), OpenAI API (via openai_model), or HF.
+    Supports llama-server (via base_url), OpenAI API (via openai_model), OpenRouter, or HF.
     """
     if not HAS_LM_EVAL:
         return {"error": "lm_eval not installed"}
 
     print("\n[7/7] Running FLORES+ (EN↔CA translation) via lm-evaluation-harness …")
+
+    _openrouter_base_url = "https://openrouter.ai/api/v1"
 
     if gemini_model:
         lm_model = "openai-chat-completions"
@@ -560,6 +537,18 @@ def run_flores(
         _orig_base_url = os.environ.get("OPENAI_BASE_URL")
         os.environ["OPENAI_API_KEY"] = gemini_api_key or ""
         os.environ["OPENAI_BASE_URL"] = _gemini_base_url
+    elif openrouter_model:
+        lm_model = "openai-chat-completions"
+        lm_model_args = (
+            f"model={openrouter_model},"
+            f"base_url={_openrouter_base_url}/chat/completions,"
+            f"api_key={openrouter_api_key},"
+            f"num_concurrent=1,max_retries=3,tokenized_requests=False"
+        )
+        _orig_api_key = os.environ.get("OPENAI_API_KEY")
+        _orig_base_url = os.environ.get("OPENAI_BASE_URL")
+        os.environ["OPENAI_API_KEY"] = openrouter_api_key or ""
+        os.environ["OPENAI_BASE_URL"] = _openrouter_base_url
     elif openai_model:
         lm_model = "openai-chat-completions"
         lm_model_args = ( 
@@ -599,7 +588,7 @@ def run_flores(
             confirm_run_unsafe_code=True,
         )
     finally:
-        if gemini_model:
+        if gemini_model or openrouter_model:
             if _orig_api_key is None:
                 os.environ.pop("OPENAI_API_KEY", None)
             else:
@@ -630,12 +619,12 @@ def main():
     parser.add_argument(
         "--model",
         default="bartowski/Llama-3.2-3B-Instruct-GGUF:Q8_0",
-        help="Model spec: GGUF (e.g. 'bartowski/Llama-3.2-3B-Instruct-GGUF:Q8_0'), 'gemini', or 'openai'",
+        help="Model spec: GGUF (e.g. 'bartowski/Llama-3.2-3B-Instruct-GGUF:Q8_0'), 'gemini', 'openai', or 'claude'",
     )
     parser.add_argument(
         "--api-key",
         default=None,
-        help="Google AI API key (required when --model gemini)",
+        help="API key: Google AI key for --model gemini, OpenRouter key for --model claude",
     )
     parser.add_argument(
         "--gemini-model",
@@ -727,7 +716,7 @@ def main():
     if args.model not in ("gemini", "openai", "claude") and not _is_gguf_model(args.model):
         raise ValueError(
             f"Only GGUF models are supported. Got: {args.model}\n"
-            "Use a GGUF spec like 'bartowski/Llama-3.2-3B-Instruct-GGUF:Q8_0', '--model gemini', or '--model openai'."
+            "Use a GGUF spec like 'bartowski/Llama-3.2-3B-Instruct-GGUF:Q8_0', '--model gemini', '--model openai', or '--model claude'."
         )
 
     tokenizer_id = (
@@ -785,6 +774,8 @@ def main():
                     openai_model=args.openai_model if args.model == "openai" else None,
                     gemini_model=args.gemini_model if args.model == "gemini" else None,
                     gemini_api_key=args.api_key if args.model == "gemini" else None,
+                    openrouter_model=args.openai_model if args.model == "claude" else None,
+                    openrouter_api_key=(args.api_key or os.environ.get("OPENROUTER_API_KEY")) if args.model == "claude" else None,
                 )
             except Exception as e:
                 print(f"[warn] FLORES failed: {e}")
@@ -800,17 +791,14 @@ def main():
         model = GeminiModel(api_key=args.api_key, model_name=args.gemini_model)
         results = _run_benchmarks(model)
     elif args.model == "claude":
-        if os.environ.get("AWS_BEARER_TOKEN_BEDROCK"):
-            model = ClaudeBedrockModel(model_name=args.openai_model or "us.anthropic.claude-sonnet-4-5-20251001-v2:0")
-        else:
-            claude_api_key = args.api_key or os.environ.get("ANTHROPIC_API_KEY")
-            if not claude_api_key:
-                raise ValueError("--api-key, ANTHROPIC_API_KEY, or AWS_BEARER_TOKEN_BEDROCK is required when using --model claude")
-            model = OpenAIModel(
-                api_key=claude_api_key,
-                model_name=args.openai_model or "claude-sonnet-4-7",
-                base_url="https://api.anthropic.com/v1",
-            )
+        openrouter_api_key = args.api_key or os.environ.get("OPENROUTER_API_KEY")
+        if not openrouter_api_key:
+            raise ValueError("--api-key or OPENROUTER_API_KEY is required when using --model claude")
+        model = OpenAIModel(
+            api_key=openrouter_api_key,
+            model_name=args.openai_model or "anthropic/claude-sonnet-4-5",
+            base_url="https://openrouter.ai/api/v1",
+        )
         results = _run_benchmarks(model)
     elif args.model == "openai":
         openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -847,6 +835,11 @@ def main():
     for bench, res in results["benchmarks"].items():
         print(f"  {bench:<15} → {res}")
     print(f"  Total time    : {elapsed_str}")
+    if isinstance(model, OpenAIModel) and (model.prompt_tokens or model.completion_tokens):
+        total_tokens = model.prompt_tokens + model.completion_tokens
+        print(f"  Tokens        : {model.prompt_tokens:,} in + {model.completion_tokens:,} out = {total_tokens:,} total")
+        if model.total_cost is not None:
+            print(f"  Cost          : ${model.total_cost:.4f}")
     print("═" * 60)
     print(f"\n  Full results saved to: {output_path}\n")
 
