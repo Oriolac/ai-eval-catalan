@@ -202,6 +202,19 @@ MODELS = [
         "ram_gb": 0,
         "params_b": None,
     },
+    {
+        "label": "claude-sonnet-4-7",
+        "output": "evals/results_claude_sonnet_4_7.json",
+        "args": [
+            "--model",
+            "claude",
+            "--openai-model",
+            "claude-sonnet-4-7",
+        ],
+        "needs_anthropic_api_key": True,
+        "ram_gb": 0,
+        "params_b": None,
+    },
 ]
 
 # Base port for llama-server (8080 is taken by Jupyter)
@@ -230,6 +243,7 @@ def main():
 
     google_api_key = os.environ.get("GOOGLE_API_KEY")
     openai_api_key = os.environ.get("OPENAI_API_KEY")
+    anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
 
     python = sys.executable
 
@@ -246,6 +260,10 @@ def main():
 
         if model.get("needs_openai_api_key") and not openai_api_key:
             print(f"[SKIP] {model['label']} — OPENAI_API_KEY env var required but not set")
+            continue
+
+        if model.get("needs_anthropic_api_key") and not anthropic_api_key:
+            print(f"[SKIP] {model['label']} — ANTHROPIC_API_KEY env var required but not set")
             continue
 
         cmd = [
