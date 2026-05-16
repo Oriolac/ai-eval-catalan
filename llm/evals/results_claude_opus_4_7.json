@@ -1,0 +1,36 @@
+{
+  "model": "claude",
+  "params_b": null,
+  "memory_gb": null,
+  "benchmarks": {
+    "veritasqa": {
+      "accuracy": 1.0,
+      "n": 353
+    },
+    "sts_ca": {
+      "pearson": 0.8283,
+      "n": 400
+    },
+    "casum": {
+      "rouge1": 0.5731,
+      "rouge2": 0.3816,
+      "rougeL": 0.5108,
+      "n": 400
+    },
+    "catcola": {
+      "mcc": 0.6107,
+      "accuracy": 0.8525,
+      "n": 400
+    },
+    "club_qa": {
+      "exact_match_approx": 0.8475,
+      "n": 400
+    },
+    "iberbench": {
+      "note": "requires llama-server model (log-prob tasks)"
+    },
+    "flores": {
+      "error": "lm_eval not installed"
+    }
+  }
+}
