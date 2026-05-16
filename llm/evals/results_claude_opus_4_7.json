@@ -1,5 +1,5 @@
 {
-  "model": "claude",
+  "model": "claude-opus-4-7",
   "params_b": null,
   "memory_gb": null,
   "benchmarks": {

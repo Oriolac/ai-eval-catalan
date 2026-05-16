@@ -736,7 +736,7 @@ def main():
 
     def _run_benchmarks(model, lm_eval_base_url: str | None = None):
         model_label = args.gemini_model if args.model == "gemini" else (
-            args.openai_model if args.model == "openai" else args.model
+            args.openai_model if args.model in ("openai", "claude") else args.model
         )
         memory_gb = _estimate_memory_gb(args.params_b, args.model)
         results = {
