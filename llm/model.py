@@ -149,6 +149,47 @@ class GeminiModel:
         return 0  # fallback
 
 
+class ClaudeBedrockModel:
+    """Anthropic Claude via AWS Bedrock using bearer token auth (Converse API)."""
+
+    def __init__(self, model_name: str = "global.anthropic.claude-sonnet-4-6"):
+        import urllib.request, urllib.error
+        self.model_name = model_name
+        self.token = os.environ["AWS_BEARER_TOKEN_BEDROCK"]
+        self.region = os.environ.get("AWS_REGION", "us-east-1")
+        self._url = f"https://bedrock-runtime.{self.region}.amazonaws.com/model/{model_name}/converse"
+        self._urllib = urllib.request
+        self._urllib_error = urllib.error
+
+    def generate(self, prompt: str, max_new_tokens: int = 256) -> str:
+        effective_tokens = max(max_new_tokens, 1024)
+        body = json.dumps({
+            "messages": [{"role": "user", "content": [{"text": prompt}]}],
+            "inferenceConfig": {"maxTokens": effective_tokens},
+        }).encode()
+        req = self._urllib.Request(
+            self._url,
+            data=body,
+            headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with self._urllib.urlopen(req) as resp:
+                data = json.loads(resp.read())
+            return data["output"]["message"]["content"][0]["text"].strip()
+        except Exception as e:
+            print(f"[error] API call failed: {e}")
+            time.sleep(2)
+            return ""
+
+    def score_options(self, prompt: str, options: list[str]) -> int:
+        answer = self.generate(prompt + "\nAnswer with only A, B, C, or D.")
+        for i, opt in enumerate(options):
+            if opt.strip().lower() in answer.lower():
+                return i
+        return 0
+
+
 class OpenAIModel:
     """OpenAI-compatible API wrapper (works with OpenAI and OpenRouter)."""
 
@@ -759,14 +800,17 @@ def main():
         model = GeminiModel(api_key=args.api_key, model_name=args.gemini_model)
         results = _run_benchmarks(model)
     elif args.model == "claude":
-        claude_api_key = args.api_key or os.environ.get("ANTHROPIC_API_KEY")
-        if not claude_api_key:
-            raise ValueError("--api-key or ANTHROPIC_API_KEY is required when using --model claude")
-        model = OpenAIModel(
-            api_key=claude_api_key,
-            model_name=args.openai_model or "claude-sonnet-4-7",
-            base_url="https://api.anthropic.com/v1",
-        )
+        if os.environ.get("AWS_BEARER_TOKEN_BEDROCK"):
+            model = ClaudeBedrockModel(model_name=args.openai_model or "us.anthropic.claude-sonnet-4-5-20251001-v2:0")
+        else:
+            claude_api_key = args.api_key or os.environ.get("ANTHROPIC_API_KEY")
+            if not claude_api_key:
+                raise ValueError("--api-key, ANTHROPIC_API_KEY, or AWS_BEARER_TOKEN_BEDROCK is required when using --model claude")
+            model = OpenAIModel(
+                api_key=claude_api_key,
+                model_name=args.openai_model or "claude-sonnet-4-7",
+                base_url="https://api.anthropic.com/v1",
+            )
         results = _run_benchmarks(model)
     elif args.model == "openai":
         openai_api_key = os.environ.get("OPENAI_API_KEY")
