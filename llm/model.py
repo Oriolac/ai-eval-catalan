@@ -551,9 +551,10 @@ def run_flores(
         os.environ["OPENAI_BASE_URL"] = _openrouter_base_url
     elif openai_model:
         lm_model = "openai-chat-completions"
-        lm_model_args = ( 
+        _base = f"base_url={base_url}/chat/completions," if base_url else ""
+        lm_model_args = (
             f"model={openai_model},"
-            f"base_url={base_url}/chat/completions,"
+            f"{_base}"
             f"num_concurrent=1,max_retries=3,tokenized_requests=False"
         )
     elif base_url:
