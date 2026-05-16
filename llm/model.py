@@ -683,7 +683,7 @@ def main():
     )
 
     # ── Validate model spec ───────────────────────────────────────────────────
-    if args.model not in ("gemini", "openai") and not _is_gguf_model(args.model):
+    if args.model not in ("gemini", "openai", "claude") and not _is_gguf_model(args.model):
         raise ValueError(
             f"Only GGUF models are supported. Got: {args.model}\n"
             "Use a GGUF spec like 'bartowski/Llama-3.2-3B-Instruct-GGUF:Q8_0', '--model gemini', or '--model openai'."
@@ -721,7 +721,7 @@ def main():
             results["benchmarks"]["club_qa"] = run_club_qa(model, args.n_samples)
 
         if "iberbench" in to_run:
-            if args.model in ("gemini", "openai"):
+            if args.model in ("gemini", "openai", "claude"):
                 print(
                     "\n[6/7] IberBench skipped — tasks require log-probabilities not available via chat API."
                 )
@@ -757,6 +757,16 @@ def main():
         if not args.api_key:
             raise ValueError("--api-key is required when using --model gemini")
         model = GeminiModel(api_key=args.api_key, model_name=args.gemini_model)
+        results = _run_benchmarks(model)
+    elif args.model == "claude":
+        claude_api_key = args.api_key or os.environ.get("ANTHROPIC_API_KEY")
+        if not claude_api_key:
+            raise ValueError("--api-key or ANTHROPIC_API_KEY is required when using --model claude")
+        model = OpenAIModel(
+            api_key=claude_api_key,
+            model_name=args.openai_model or "claude-sonnet-4-7",
+            base_url="https://api.anthropic.com/v1",
+        )
         results = _run_benchmarks(model)
     elif args.model == "openai":
         openai_api_key = os.environ.get("OPENAI_API_KEY")
