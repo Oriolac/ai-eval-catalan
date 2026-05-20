@@ -190,6 +190,19 @@ MODELS = [
         "params_b": None,
     },
     {
+        "label": "gemini-3-5-flash",
+        "output": "evals/results_gemini_3_5_flash.json",
+        "args": [
+            "--model",
+            "gemini",
+            "--gemini-model",
+            "gemini-3.5-flash",
+        ],
+        "needs_api_key": True,
+        "ram_gb": 0,
+        "params_b": None,
+    },
+    {
         "label": "gpt-5.4-mini",
         "output": "evals/results_gpt_5_4_mini.json",
         "args": [
