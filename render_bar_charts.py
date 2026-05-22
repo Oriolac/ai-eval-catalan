@@ -93,6 +93,7 @@ def build_wer_chart(data: list[dict]) -> dict:
             "bar_pct": (wer / max_val) * 100,
             "color": wer_color(wer),
             "display": f"{wer*100:.2f}%",
+            "cloud": r.get("cloud", False),
         })
 
     return {

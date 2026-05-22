@@ -107,7 +107,7 @@
       </div>
       {% for row in chart.rows %}
       <div class="chart-row">
-        <div class="row-label" title="{{ row.label }}">{{ row.label }}</div>
+        <div class="row-label" title="{{ row.label }}">{% if row.cloud %}<b>{{ row.label }}</b>{% else %}{{ row.label }}{% endif %}</div>
         <div class="bar-area">
           <div class="bar" style="width: {{ "%.2f" | format(row.bar_pct) }}%; background-color: {{ row.color }};"></div>
         </div>
