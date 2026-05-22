@@ -87,6 +87,7 @@ def main():
     json_rows = [
         {
             "model": r["model"],
+            "cloud": r.get("cloud", False),
             "params_b": r.get("params_b"),
             "memory_gb": r.get("memory_gb"),
             **{k: round(r[k], 4) if r.get(k) is not None else None for k in METRICS},

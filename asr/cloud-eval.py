@@ -48,7 +48,12 @@ OPENAI_ASR_MODELS = [
     "gpt-4o-transcribe",
 ]
 
-ALL_MODELS = OPENAI_ASR_MODELS
+GEMINI_ASR_MODELS = [
+    "gemini-3.5-flash",
+    "gemini-3.0-flash",
+]
+
+ALL_MODELS = OPENAI_ASR_MODELS + GEMINI_ASR_MODELS
 
 
 class OpenAIASRWrapper:
@@ -75,10 +80,51 @@ class OpenAIASRWrapper:
             os.unlink(tmp_path)
 
 
+class GeminiASRWrapper:
+    PROMPT = (
+        "Transcribe the following Catalan speech segment verbatim into Catalan. "
+        "Do not translate. Do not paraphrase. Do not add any commentary.\n"
+        "Formatting rules:\n"
+        "* Output only the transcription, nothing else, with no newlines.\n"
+        "* Do not add punctuation unless it was clearly spoken.\n"
+        "* Write numbers as digits (e.g. 3 not three, 1.7 not one point seven)."
+    )
+
+    def __init__(self, model_name: str):
+        from google import genai
+        from google.genai import types
+
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY environment variable is required")
+        self.client = genai.Client(api_key=api_key)
+        self.types = types
+        self.model_name = model_name
+
+    def transcribe(self, waveform: torch.Tensor, sample_rate: int, lang: str) -> str:
+        import io
+        buf = io.BytesIO()
+        sf.write(buf, waveform.numpy(), sample_rate, format="WAV")
+        audio_bytes = buf.getvalue()
+
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=[
+                self.types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
+                self.PROMPT,
+            ],
+            config=self.types.GenerateContentConfig(temperature=0, max_output_tokens=512),
+        )
+        return response.text.strip() if response.text else ""
+
+
 def load_model(model_name: str):
     if model_name in OPENAI_ASR_MODELS:
         print(f"Loading OpenAI ASR model: {model_name}")
         return OpenAIASRWrapper(model_name)
+    elif model_name in GEMINI_ASR_MODELS:
+        print(f"Loading Gemini ASR model: {model_name}")
+        return GeminiASRWrapper(model_name)
     else:
         raise ValueError(f"Unknown model: {model_name}. Available: {ALL_MODELS}")
 
@@ -237,6 +283,9 @@ def main():
         print("Available cloud ASR models:")
         print("\nOpenAI (OPENAI_API_KEY required):")
         for m in OPENAI_ASR_MODELS:
+            print(f"  - {m}")
+        print("\nGemini (GOOGLE_API_KEY required):")
+        for m in GEMINI_ASR_MODELS:
             print(f"  - {m}")
         return
 

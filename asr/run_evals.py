@@ -113,6 +113,20 @@ MODELS = [
         "output": "evals/results_gpt4o_transcribe.json",
         "needs_openai_api_key": True,
     },
+    {
+        "label": "gemini-3.5-flash",
+        "script": "cloud-eval.py",
+        "args": ["gemini-3.5-flash"],
+        "output": "evals/results_gemini_3_5_flash_asr.json",
+        "needs_google_api_key": True,
+    },
+    {
+        "label": "gemini-3.0-flash",
+        "script": "cloud-eval.py",
+        "args": ["gemini-3.0-flash"],
+        "output": "evals/results_gemini_3_0_flash_asr.json",
+        "needs_google_api_key": True,
+    },
 ]
 
 
@@ -125,6 +139,7 @@ def main():
     import os
 
     openai_api_key = os.environ.get("OPENAI_API_KEY")
+    google_api_key = os.environ.get("GOOGLE_API_KEY")
     python = sys.executable
 
     for model in MODELS:
@@ -136,6 +151,10 @@ def main():
 
         if model.get("needs_openai_api_key") and not openai_api_key:
             print(f"[SKIP] {model['label']} — OPENAI_API_KEY env var required but not set")
+            continue
+
+        if model.get("needs_google_api_key") and not google_api_key:
+            print(f"[SKIP] {model['label']} — GOOGLE_API_KEY env var required but not set")
             continue
 
         script = model.get("script", "hf-eval.py")
