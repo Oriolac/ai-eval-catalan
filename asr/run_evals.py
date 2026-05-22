@@ -106,6 +106,13 @@ MODELS = [
         "args": ["gemma-4-E2B"],
         "output": "evals/results_gemma4_e2b.json",
     },
+    {
+        "label": "gpt-4o-transcribe",
+        "script": "cloud-eval.py",
+        "args": ["gpt-4o-transcribe"],
+        "output": "evals/results_gpt4o_transcribe.json",
+        "needs_openai_api_key": True,
+    },
 ]
 
 
@@ -115,6 +122,9 @@ def main():
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     args = parser.parse_args()
 
+    import os
+
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
     python = sys.executable
 
     for model in MODELS:
@@ -124,13 +134,17 @@ def main():
             print(f"[SKIP] {model['label']} — {output_path} already exists")
             continue
 
-        cmd = [
-            python,
-            "-u",
-            "hf-eval.py",
-            *model["args"],
-            "--device",
-            args.device,
+        if model.get("needs_openai_api_key") and not openai_api_key:
+            print(f"[SKIP] {model['label']} — OPENAI_API_KEY env var required but not set")
+            continue
+
+        script = model.get("script", "hf-eval.py")
+        cmd = [python, "-u", script, *model["args"]]
+
+        if script == "hf-eval.py":
+            cmd += ["--device", args.device]
+
+        cmd += [
             "--num_samples",
             str(args.num_samples),
             "--output",

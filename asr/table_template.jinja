@@ -15,7 +15,7 @@
 <tbody>
 {% for row in rows %}
 <tr>
-<td>{{ row.model }}</td>
+<td>{% if row.cloud %}<b>{{ row.model }}</b>{% else %}{{ row.model }}{% endif %}</td>
 <td>{{ row | fmt_params }}</td>
 {% for col in cols %}<td>{{ row[col] | fmt }}</td>{% endfor %}
 </tr>

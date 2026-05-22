@@ -1,0 +1,12 @@
+{
+  "model": "gpt-4o-transcribe",
+  "cloud": true,
+  "benchmarks": {
+    "fleurs_ca": {
+      "wer": 0.0309,
+      "cer": 0.0154,
+      "rtf": null,
+      "n": 200
+    }
+  }
+}

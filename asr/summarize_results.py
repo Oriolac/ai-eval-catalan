@@ -35,6 +35,7 @@ def load_results(results_dir: Path) -> list[dict]:
             fleurs = data.get("benchmarks", {}).get("fleurs_ca", {})
             rows.append({
                 "model": data.get("model", path.stem),
+                "cloud": data.get("cloud", False),
                 "params_b": data.get("params_b"),
                 "memory_gb": data.get("memory_gb"),
                 "wer": fleurs.get("wer"),
