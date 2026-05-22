@@ -27,6 +27,13 @@ def fmt_pct(value) -> str:
     return f"{value:.1f}%"
 
 
+def fmt_dec_pct(value) -> str:
+    """Format a 0–1 decimal as a percentage with 2 decimal places."""
+    if value is None:
+        return "—"
+    return f"{value * 100:.2f}%"
+
+
 def fmt_params(row) -> str:
     params_b = row.get("params_b")
     memory_gb = row.get("memory_gb")
@@ -49,6 +56,7 @@ def render(json_path: Path, template_path: Path, out: Path) -> None:
     env = Environment(loader=FileSystemLoader(str(template_path.parent)))
     env.filters["fmt"] = fmt
     env.filters["fmt_pct"] = fmt_pct
+    env.filters["fmt_dec_pct"] = fmt_dec_pct
     env.filters["fmt_params"] = fmt_params
     template = env.get_template(template_path.name)
 

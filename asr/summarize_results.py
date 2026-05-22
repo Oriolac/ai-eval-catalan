@@ -54,6 +54,12 @@ def fmt(value, digits=4) -> str:
     return f"{value:.{digits}f}"
 
 
+def fmt_pct(value) -> str:
+    if value is None:
+        return "—"
+    return f"{value*100:.2f}%"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Summarize ASR eval results")
     parser.add_argument("--results-dir", default="evals")
@@ -79,7 +85,7 @@ def main():
     for r in rows:
         rt = f"{1/r['rtf']:.1f}x" if r["rtf"] else "—"
         n = str(r["n"]) if r["n"] else "—"
-        print(f"{r['model']:<{label_w}}{fmt(r['wer']):>10}{fmt(r['cer']):>10}{fmt(r['rtf']):>10}{rt:>12}{n:>6}")
+        print(f"{r['model']:<{label_w}}{fmt_pct(r['wer']):>10}{fmt_pct(r['cer']):>10}{fmt(r['rtf']):>10}{rt:>12}{n:>6}")
     print(sep)
 
     # ── JSON export ───────────────────────────────────────────────────────────
