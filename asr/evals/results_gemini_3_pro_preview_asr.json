@@ -1,0 +1,12 @@
+{
+  "model": "gemini-3-pro-preview",
+  "cloud": true,
+  "benchmarks": {
+    "fleurs_ca": {
+      "wer": 0.0487,
+      "cer": 0.031,
+      "rtf": null,
+      "n": 200
+    }
+  }
+}

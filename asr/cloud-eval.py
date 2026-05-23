@@ -50,7 +50,7 @@ OPENAI_ASR_MODELS = [
 
 GEMINI_ASR_MODELS = [
     "gemini-3.5-flash",
-    "gemini-3.0-flash",
+    "gemini-3-pro-preview",
 ]
 
 ALL_MODELS = OPENAI_ASR_MODELS + GEMINI_ASR_MODELS
@@ -102,20 +102,24 @@ class GeminiASRWrapper:
         self.model_name = model_name
 
     def transcribe(self, waveform: torch.Tensor, sample_rate: int, lang: str) -> str:
-        import io
-        buf = io.BytesIO()
-        sf.write(buf, waveform.numpy(), sample_rate, format="WAV")
-        audio_bytes = buf.getvalue()
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp_path = tmp.name
 
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=[
-                self.types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
-                self.PROMPT,
-            ],
-            config=self.types.GenerateContentConfig(temperature=0, max_output_tokens=512),
-        )
-        return response.text.strip() if response.text else ""
+        try:
+            sf.write(tmp_path, waveform.numpy(), sample_rate)
+            uploaded = self.client.files.upload(file=tmp_path, config={"mime_type": "audio/wav"})
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=[
+                    self.types.Part.from_uri(file_uri=uploaded.uri, mime_type="audio/wav"),
+                    self.PROMPT,
+                ],
+                config=self.types.GenerateContentConfig(temperature=1.0, max_output_tokens=2048),
+            )
+            self.client.files.delete(name=uploaded.name)
+            return response.text.strip() if response.text else ""
+        finally:
+            os.unlink(tmp_path)
 
 
 def load_model(model_name: str):

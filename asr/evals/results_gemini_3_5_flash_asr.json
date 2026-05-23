@@ -1,0 +1,12 @@
+{
+  "model": "gemini-3.5-flash",
+  "cloud": true,
+  "benchmarks": {
+    "fleurs_ca": {
+      "wer": 0.0439,
+      "cer": 0.0191,
+      "rtf": null,
+      "n": 200
+    }
+  }
+}

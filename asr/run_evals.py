@@ -121,10 +121,10 @@ MODELS = [
         "needs_google_api_key": True,
     },
     {
-        "label": "gemini-3.0-flash",
+        "label": "gemini-3-pro-preview",
         "script": "cloud-eval.py",
-        "args": ["gemini-3.0-flash"],
-        "output": "evals/results_gemini_3_0_flash_asr.json",
+        "args": ["gemini-3-pro-preview"],
+        "output": "evals/results_gemini_3_pro_preview_asr.json",
         "needs_google_api_key": True,
     },
 ]
