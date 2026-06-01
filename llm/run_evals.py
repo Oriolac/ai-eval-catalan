@@ -47,18 +47,6 @@ MODELS = [
         "params_b": 24.0,
     },
     {
-        "label": "gpt-oss-20b",
-        "output": "evals/results_gpt_oss_20b.json",
-        "args": [
-            "--model",
-            "bartowski/openai_gpt-oss-20b-GGUF:Q4_K_M",
-            "--device",
-            "cuda",
-        ],
-        "ram_gb": 11,
-        "params_b": 20.0,
-    },
-    {
         "label": "qwen3-14b",
         "output": "evals/results_qwen3_14b.json",
         "args": ["--model", "bartowski/Qwen_Qwen3-14B-GGUF:Q8_0", "--device", "cuda"],
