@@ -250,6 +250,7 @@ def main():
             "casum",
             "iberbench",
             "flores",
+            "ifeval",
             "all",
         ],
     )

@@ -70,6 +70,12 @@ def extract_metrics(data: dict) -> dict:
         if ca2en:
             metrics["flores_ca2en"] = ca2en.get("bleu,none")
 
+    ifeval = benchmarks.get("ifeval", {})
+    if ifeval and "error" not in ifeval:
+        prompt_strict = ifeval.get("prompt_level_strict_acc,none")
+        if prompt_strict is not None:
+            metrics["ifeval_prompt_strict"] = prompt_strict
+
     return metrics
 
 
@@ -111,6 +117,7 @@ RANDOM_BASELINES = {
     "casum_rougeL":    0.0,   # bounded 0..1
     "flores_en2ca":    0.0,   # BLEU/100 → 0..1
     "flores_ca2en":    0.0,   # BLEU/100 → 0..1
+    "ifeval_prompt_strict": 0.0,  # prompt-level strict accuracy, bounded 0..1
 }
 
 CLAM_TASKS = list(RANDOM_BASELINES.keys())
@@ -126,6 +133,7 @@ COLUMN_LABELS = {
     "casum_rougeL": "CaSum",
     "flores_en2ca": "EN→CA",
     "flores_ca2en": "CA→EN",
+    "ifeval_prompt_strict": "IFEval",
     "clam_pct": "CLAM%",
 }
 

@@ -29,6 +29,17 @@
     "iberbench": {
       "note": "requires llama-server model (log-prob tasks)"
     },
+    "ifeval": {
+      "alias": "ifeval_ca",
+      "prompt_level_strict_acc,none": 0.38,
+      "prompt_level_strict_acc_stderr,none": 0.024299715851758236,
+      "inst_level_strict_acc,none": 0.4509151414309484,
+      "inst_level_strict_acc_stderr,none": "N/A",
+      "prompt_level_loose_acc,none": 0.4,
+      "prompt_level_loose_acc_stderr,none": 0.02452557357939863,
+      "inst_level_loose_acc,none": 0.46921797004991683,
+      "inst_level_loose_acc_stderr,none": "N/A"
+    },
     "flores": {
       "catalan_bench_flores_en-ca": {
         "alias": "catalan_bench_flores_en-ca",

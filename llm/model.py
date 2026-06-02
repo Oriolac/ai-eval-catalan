@@ -611,6 +611,128 @@ def run_flores(
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 8. IFEval-ca — Instruction Following (Catalan)
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def run_ifeval(
+    model_name: str,
+    base_url: str | None = None,
+    tokenizer: str | None = None,
+    n_samples: int | None = None,
+    openai_model: str | None = None,
+    gemini_model: str | None = None,
+    gemini_api_key: str | None = None,
+    openrouter_model: str | None = None,
+    openrouter_api_key: str | None = None,
+) -> dict:
+    """
+    Catalan IFEval — instruction-following evaluation via lm-evaluation-harness.
+    Dataset: projecte-aina/IFEval_ca (541 prompts professionally translated from Google IFEval).
+    Metric: prompt-level / instruction-level strict & loose accuracy (rule-based, deterministic).
+    Generative task — works with chat APIs and local llama-server (no log-probs required).
+    """
+    if not HAS_LM_EVAL:
+        return {"error": "lm_eval not installed"}
+
+    print("\n[8/8] Running IFEval-ca (instruction following) via lm-evaluation-harness …")
+
+    _openrouter_base_url = "https://openrouter.ai/api/v1"
+    _orig_api_key = None
+    _orig_base_url = None
+    needs_env_restore = False
+
+    if gemini_model:
+        lm_model = "openai-chat-completions"
+        _gemini_base_url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+        # eos_string=</s> avoids lm_eval sending an empty stop=[] array which the
+        # Gemini OpenAI-compat endpoint rejects with 400 "Value is not a string: []".
+        # The literal string is unlikely to appear in Catalan output, so generation
+        # will end naturally on max_gen_toks instead.
+        lm_model_args = (
+            f"model={gemini_model},base_url={_gemini_base_url},"
+            f"max_gen_toks=2048,eos_string=</s>,"
+            f"num_concurrent=8,max_retries=3,timeout=120"
+        )
+        _orig_api_key = os.environ.get("OPENAI_API_KEY")
+        _orig_base_url = os.environ.get("OPENAI_BASE_URL")
+        os.environ["OPENAI_API_KEY"] = gemini_api_key or ""
+        os.environ["OPENAI_BASE_URL"] = _gemini_base_url
+        needs_env_restore = True
+    elif openrouter_model:
+        lm_model = "openai-chat-completions"
+        lm_model_args = (
+            f"model={openrouter_model},"
+            f"base_url={_openrouter_base_url}/chat/completions,"
+            f"api_key={openrouter_api_key},"
+            f"num_concurrent=4,max_retries=3,timeout=120,tokenized_requests=False"
+        )
+        _orig_api_key = os.environ.get("OPENAI_API_KEY")
+        _orig_base_url = os.environ.get("OPENAI_BASE_URL")
+        os.environ["OPENAI_API_KEY"] = openrouter_api_key or ""
+        os.environ["OPENAI_BASE_URL"] = _openrouter_base_url
+        needs_env_restore = True
+    elif openai_model:
+        lm_model = "openai-chat-completions"
+        _base = f"base_url={base_url}/chat/completions," if base_url else ""
+        lm_model_args = (
+            f"model={openai_model},"
+            f"{_base}"
+            f"num_concurrent=8,max_retries=3,timeout=120,tokenized_requests=False"
+        )
+    elif base_url:
+        tok = tokenizer or model_name
+        lm_model = "local-chat-completions"
+        lm_model_args = (
+            f"model={tok},"
+            f"base_url={base_url}/chat/completions,"
+            f"num_concurrent=1,max_retries=3,timeout=120,tokenized_requests=False"
+        )
+    else:
+        lm_model = "hf"
+        mistral_fix = (
+            ",tokenizer_kwargs={fix_mistral_regex:True}"
+            if "mistral" in model_name.lower()
+            else ""
+        )
+        lm_model_args = f"pretrained={model_name}{mistral_fix}"
+
+    try:
+        results = lm_eval.simple_evaluate(
+            model=lm_model,
+            model_args=lm_model_args,
+            tasks=["ifeval_ca"],
+            num_fewshot=0,
+            apply_chat_template=True,
+            batch_size=1,
+            log_samples=False,
+            limit=n_samples,
+            confirm_run_unsafe_code=True,
+        )
+    finally:
+        if needs_env_restore:
+            if _orig_api_key is None:
+                os.environ.pop("OPENAI_API_KEY", None)
+            else:
+                os.environ["OPENAI_API_KEY"] = _orig_api_key
+            if _orig_base_url is None:
+                os.environ.pop("OPENAI_BASE_URL", None)
+            else:
+                os.environ["OPENAI_BASE_URL"] = _orig_base_url
+
+    score = results["results"].get("ifeval_ca", {})
+    p_strict = score.get("prompt_level_strict_acc,none", "n/a")
+    i_strict = score.get("inst_level_strict_acc,none", "n/a")
+    p_loose = score.get("prompt_level_loose_acc,none", "n/a")
+    i_loose = score.get("inst_level_loose_acc,none", "n/a")
+    print(
+        f"    ✓ prompt-strict={p_strict}  inst-strict={i_strict}  "
+        f"prompt-loose={p_loose}  inst-loose={i_loose}"
+    )
+    return score
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Main runner
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -653,6 +775,7 @@ def main():
             "casum",
             "iberbench",
             "flores",
+            "ifeval",
             "all",
         ],
         default=["all"],
@@ -710,7 +833,7 @@ def main():
     to_run = (
         set(args.benchmarks)
         if not run_all
-        else {"veritasqa", "sts_ca", "catcola", "club", "casum", "iberbench", "flores"}
+        else {"veritasqa", "sts_ca", "catcola", "club", "casum", "iberbench", "flores", "ifeval"}
     )
 
     # ── Validate model spec ───────────────────────────────────────────────────
@@ -781,6 +904,20 @@ def main():
             except Exception as e:
                 print(f"[warn] FLORES failed: {e}")
                 results["benchmarks"]["flores"] = {"error": str(e)}
+
+        if "ifeval" in to_run:
+            try:
+                results["benchmarks"]["ifeval"] = run_ifeval(
+                    args.model, lm_eval_base_url, tokenizer_id, args.n_samples,
+                    openai_model=args.openai_model if args.model == "openai" else None,
+                    gemini_model=args.gemini_model if args.model == "gemini" else None,
+                    gemini_api_key=args.api_key if args.model == "gemini" else None,
+                    openrouter_model=args.openai_model if args.model == "claude" else None,
+                    openrouter_api_key=(args.api_key or os.environ.get("OPENROUTER_API_KEY")) if args.model == "claude" else None,
+                )
+            except Exception as e:
+                print(f"[warn] IFEval-ca failed: {e}")
+                results["benchmarks"]["ifeval"] = {"error": str(e)}
 
         return results
 

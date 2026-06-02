@@ -64,6 +64,17 @@
         "chrf,none": 70.34838578163472,
         "chrf_stderr,none": 0.5879070026146126
       }
+    },
+    "ifeval": {
+      "alias": "ifeval_ca",
+      "prompt_level_strict_acc,none": 0.705,
+      "prompt_level_strict_acc_stderr,none": 0.022830694284312857,
+      "inst_level_strict_acc,none": 0.7870216306156406,
+      "inst_level_strict_acc_stderr,none": "N/A",
+      "prompt_level_loose_acc,none": 0.7375,
+      "prompt_level_loose_acc_stderr,none": 0.02202719610892523,
+      "inst_level_loose_acc,none": 0.8136439267886856,
+      "inst_level_loose_acc_stderr,none": "N/A"
     }
   }
 }
