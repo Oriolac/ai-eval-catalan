@@ -56,6 +56,7 @@ def build_clam_chart(data: list[dict]) -> dict:
             "bar_pct": (pct / max_val) * 100,
             "color": clam_color(pct),
             "display": f"{pct:.1f}%",
+            "cloud": r.get("cloud", False),
         })
 
     return {
