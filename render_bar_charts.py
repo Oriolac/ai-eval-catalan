@@ -40,16 +40,6 @@ def shorten_asr_label(model: str) -> str:
     return name
 
 
-def shorten_llm_label(model: str) -> str:
-    """Clean up llm model names for display."""
-    # Strip org prefix (e.g. 'google_gemma-3-12b-it' → 'gemma-3-12b-it')
-    if "_" in model and not model.startswith("gpt") and not model.startswith("gemini"):
-        model = model.split("_", 1)[-1]
-    # Strip '-it' suffix
-    import re
-    model = re.sub(r"-it$", "", model)
-    return model
-
 
 def build_clam_chart(data: list[dict]) -> dict:
     max_val = max(r["clam_pct"] for r in data if r["clam_pct"] is not None)
@@ -62,7 +52,7 @@ def build_clam_chart(data: list[dict]) -> dict:
             continue
         pct = r["clam_pct"]
         rows.append({
-            "label": shorten_llm_label(r["model"]),
+            "label": r["model"],
             "bar_pct": (pct / max_val) * 100,
             "color": clam_color(pct),
             "display": f"{pct:.1f}%",

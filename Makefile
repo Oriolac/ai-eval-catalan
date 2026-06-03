@@ -1,0 +1,5 @@
+render-local:
+	cd llm && uv run summarize_results.py > /dev/null && cd ..
+	uv run render_tables.py
+	uv run render_bar_charts.py
+	uv run render_index_local.py

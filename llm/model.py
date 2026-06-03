@@ -810,6 +810,17 @@ def main():
         default=None,
         help="Model parameter count in billions (e.g. 7.0 for a 7B model)",
     )
+    parser.add_argument(
+        "--display-name",
+        default=None,
+        help="Name to use in tables and charts (defaults to model identifier)",
+    )
+    parser.add_argument(
+        "--cloud",
+        action="store_true",
+        default=False,
+        help="Mark this model as a cloud API model (not a local GGUF)",
+    )
     args = parser.parse_args()
 
     # ── Compute memory estimate ───────────────────────────────────────────────
@@ -854,6 +865,8 @@ def main():
         memory_gb = _estimate_memory_gb(args.params_b, args.model)
         results = {
             "model": model_label,
+            "display_name": args.display_name,
+            "cloud": args.cloud,
             "params_b": args.params_b,
             "memory_gb": memory_gb,
             "benchmarks": {},

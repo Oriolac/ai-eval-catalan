@@ -79,33 +79,6 @@ def extract_metrics(data: dict) -> dict:
     return metrics
 
 
-def is_cloud_model(label: str) -> bool:
-    """Return True if the model is a cloud API model (not a local GGUF)."""
-    return "GGUF" not in label and "/" not in label
-
-
-def shorten_model_label(label: str) -> str:
-    """bartowski/ModelName-GGUF:Q8_0  →  ModelName"""
-    import re
-    # Extract quantization suffix (e.g. "Q4_K_M" or "Q8_0") before stripping
-    quant = label.split(":")[-1] if ":" in label else ""
-    # Strip leading path (e.g. "bartowski/")
-    name = label.split("/")[-1]
-    # Strip quantization suffix (e.g. ":Q8_0")
-    name = name.split(":")[0]
-    # Strip "-GGUF" / "-guff" suffix (case-insensitive)
-    name = re.sub(r"-GGUF$", "", name, flags=re.IGNORECASE)
-    # Strip redundant "Qwen_" prefix (bartowski uses org_model naming)
-    name = re.sub(r"^Qwen_", "", name)
-    # Strip "-Instruct" and trailing version numbers
-    name = re.sub(r"-Instruct(?:-\d+)?$", "", name)
-    # For gemma-4 models, append quantization suffix for clarity
-    is_gemma4 = "gemma-4" in name.lower() or "gemma4" in name.lower()
-    if is_gemma4 and quant.upper().startswith("Q4"):
-        name += " Q4"
-    elif is_gemma4 and quant.upper().startswith("Q8"):
-        name += " Q8"
-    return name
 
 
 # Random baselines per task for normalization (HF Open LLM Leaderboard v2 approach)
@@ -269,7 +242,9 @@ def main():
         metrics = extract_metrics(data)
         params_b = data.get("params_b")
         memory_gb = data.get("memory_gb")
-        rows.append((shorten_model_label(label), metrics, is_cloud_model(label), params_b, memory_gb))
+        display = data.get("display_name") or label
+        cloud = data.get("cloud", False)
+        rows.append((display, metrics, cloud, params_b, memory_gb))
         for k in metrics:
             if k not in all_metric_keys:
                 all_metric_keys.append(k)

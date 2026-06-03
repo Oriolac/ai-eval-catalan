@@ -1,5 +1,7 @@
 {
   "model": "gemini-3.5-flash",
+  "display_name": "gemini-3-5-flash",
+  "cloud": true,
   "params_b": null,
   "memory_gb": null,
   "benchmarks": {

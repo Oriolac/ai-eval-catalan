@@ -1,5 +1,6 @@
 {
   "model": "bartowski/EuroLLM-9B-Instruct-GGUF:Q8_0",
+  "display_name": "eurollm-9b",
   "params_b": 9.0,
   "memory_gb": 9.6,
   "benchmarks": {

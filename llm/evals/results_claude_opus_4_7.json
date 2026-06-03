@@ -1,5 +1,7 @@
 {
   "model": "claude-opus-4-7",
+  "display_name": "claude-opus-4-7",
+  "cloud": true,
   "params_b": null,
   "memory_gb": null,
   "benchmarks": {

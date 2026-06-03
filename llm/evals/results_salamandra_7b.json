@@ -1,5 +1,6 @@
 {
   "model": "RichardErkhov/BSC-LT_-_salamandra-7b-instruct-gguf:Q8_0",
+  "display_name": "salamandra-7b",
   "params_b": 7.0,
   "memory_gb": 7.4,
   "benchmarks": {

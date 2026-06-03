@@ -1,5 +1,7 @@
 {
   "model": "gpt-5.5",
+  "display_name": "gpt-5.5",
+  "cloud": true,
   "params_b": null,
   "memory_gb": null,
   "benchmarks": {

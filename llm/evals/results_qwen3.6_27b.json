@@ -1,5 +1,6 @@
 {
   "model": "unsloth/Qwen3.6-27B-GGUF:Q8_0",
+  "display_name": "qwen3.6-27b",
   "params_b": 27.0,
   "memory_gb": 28.7,
   "benchmarks": {

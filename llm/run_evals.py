@@ -23,7 +23,7 @@ SCRIPT_DIR = Path(__file__).parent
 # 24B Q8 (~24 GB) exceeds VRAM; using Q4_K_M (~13 GB) instead.
 MODELS = [
     {
-        "label": "gemma3-12b",
+        "display_name": "gemma3-12b",
         "output": "evals/results_gemma3_12b.json",
         "args": [
             "--model",
@@ -35,7 +35,7 @@ MODELS = [
         "params_b": 12.0,
     },
     {
-        "label": "mistral-small-24b",
+        "display_name": "mistral-small-24b",
         "output": "evals/results_mistral_small_24b.json",
         "args": [
             "--model",
@@ -47,28 +47,28 @@ MODELS = [
         "params_b": 24.0,
     },
     {
-        "label": "qwen3-14b",
+        "display_name": "qwen3-14b",
         "output": "evals/results_qwen3_14b.json",
         "args": ["--model", "bartowski/Qwen_Qwen3-14B-GGUF:Q8_0", "--device", "cuda"],
         "ram_gb": 14,
         "params_b": 14.0,
     },
     {
-        "label": "qwen3.5-9b",
+        "display_name": "qwen3.5-9b",
         "output": "evals/results_qwen3.5_9b.json",
         "args": ["--model", "bartowski/Qwen_Qwen3.5-9B-GGUF:Q8_0", "--device", "cuda"],
         "ram_gb": 9,
         "params_b": 9.0,
     },
     {
-        "label": "qwen3.6-27b",
+        "display_name": "qwen3.6-27b",
         "output": "evals/results_qwen3.6_27b.json",
         "args": ["--model", "unsloth/Qwen3.6-27B-GGUF:Q8_0", "--device", "cuda"],
         "ram_gb": 27,
         "params_b": 27.0,
     },
     {
-        "label": "llama3.1-8b",
+        "display_name": "llama3.1-8b",
         "output": "evals/results_llama3.1_8b.json",
         "args": [
             "--model",
@@ -80,7 +80,7 @@ MODELS = [
         "params_b": 8.0,
     },
     {
-        "label": "aya-expanse-8b",
+        "display_name": "aya-expanse-8b",
         "output": "evals/results_aya_expanse_8b.json",
         "args": [
             "--model",
@@ -92,7 +92,7 @@ MODELS = [
         "params_b": 8.0,
     },
     {
-        "label": "eurollm-9b",
+        "display_name": "eurollm-9b",
         "output": "evals/results_eurollm_9b.json",
         "args": [
             "--model",
@@ -104,7 +104,7 @@ MODELS = [
         "params_b": 9.0,
     },
     {
-        "label": "salamandra-7b",
+        "display_name": "salamandra-7b",
         "output": "evals/results_salamandra_7b.json",
         "args": [
             "--model",
@@ -116,7 +116,7 @@ MODELS = [
         "params_b": 7.0,
     },
     {
-        "label": "gemma4-e4b",
+        "display_name": "gemma4-e4b",
         "output": "evals/results_gemma4_e4b.json",
         "args": [
             "--model",
@@ -128,7 +128,7 @@ MODELS = [
         "params_b": 4.0,
     },
     {
-        "label": "gemma4-26b-q4",
+        "display_name": "gemma4-26b-q4",
         "output": "evals/results_gemma4_26b_q4.json",
         "args": [
             "--model",
@@ -140,7 +140,7 @@ MODELS = [
         "params_b": 26.0,
     },
     {
-        "label": "gemma4-26b-q8",
+        "display_name": "gemma4-26b-q8",
         "output": "evals/results_gemma4_26b_q8.json",
         "args": [
             "--model",
@@ -152,7 +152,7 @@ MODELS = [
         "params_b": 26.0,
     },
     {
-        "label": "gemini-3-1-preview",
+        "display_name": "gemini-3-1-preview",
         "output": "evals/results_gemini_3_1_preview.json",
         "args": [
             "--model",
@@ -160,12 +160,13 @@ MODELS = [
             "--gemini-model",
             "gemini-3.1-pro-preview",
         ],
+        "cloud": True,
         "needs_api_key": True,
         "ram_gb": 0,
         "params_b": None,
     },
     {
-        "label": "gemini-3-flash-preview",
+        "display_name": "gemini-3-flash-preview",
         "output": "evals/results_gemini_3_flash_preview.json",
         "args": [
             "--model",
@@ -173,12 +174,13 @@ MODELS = [
             "--gemini-model",
             "gemini-3-flash-preview",
         ],
+        "cloud": True,
         "needs_api_key": True,
         "ram_gb": 0,
         "params_b": None,
     },
     {
-        "label": "gemini-3-5-flash",
+        "display_name": "gemini-3-5-flash",
         "output": "evals/results_gemini_3_5_flash.json",
         "args": [
             "--model",
@@ -186,12 +188,13 @@ MODELS = [
             "--gemini-model",
             "gemini-3.5-flash",
         ],
+        "cloud": True,
         "needs_api_key": True,
         "ram_gb": 0,
         "params_b": None,
     },
     {
-        "label": "gpt-5.4-mini",
+        "display_name": "gpt-5.4-mini",
         "output": "evals/results_gpt_5_4_mini.json",
         "args": [
             "--model",
@@ -199,12 +202,13 @@ MODELS = [
             "--openai-model",
             "gpt-5.4-mini",
         ],
+        "cloud": True,
         "needs_openai_api_key": True,
         "ram_gb": 0,
         "params_b": None,
     },
     {
-        "label": "gpt-5.5",
+        "display_name": "gpt-5.5",
         "output": "evals/results_gpt_5_5.json",
         "args": [
             "--model",
@@ -212,12 +216,13 @@ MODELS = [
             "--openai-model",
             "gpt-5.5",
         ],
+        "cloud": True,
         "needs_openai_api_key": True,
         "ram_gb": 0,
         "params_b": None,
     },
     {
-        "label": "claude-opus-4-7",
+        "display_name": "claude-opus-4-7",
         "output": "evals/results_claude_opus_4_7.json",
         "args": [
             "--model",
@@ -225,6 +230,7 @@ MODELS = [
             "--openai-model",
             "anthropic/claude-opus-4-7",
         ],
+        "cloud": True,
         "needs_openrouter_api_key": True,
         "ram_gb": 0,
         "params_b": None,
@@ -264,21 +270,22 @@ def main():
 
     for model in MODELS:
         output_path = Path(model["output"])
+        name = model["display_name"]
 
         if output_path.exists():
-            print(f"[SKIP] {model['label']} — {output_path} already exists")
+            print(f"[SKIP] {name} — {output_path} already exists")
             continue
 
         if model.get("needs_api_key") and not google_api_key:
-            print(f"[SKIP] {model['label']} — GOOGLE_API_KEY env var required but not set")
+            print(f"[SKIP] {name} — GOOGLE_API_KEY env var required but not set")
             continue
 
         if model.get("needs_openai_api_key") and not openai_api_key:
-            print(f"[SKIP] {model['label']} — OPENAI_API_KEY env var required but not set")
+            print(f"[SKIP] {name} — OPENAI_API_KEY env var required but not set")
             continue
 
         if model.get("needs_openrouter_api_key") and not openrouter_api_key:
-            print(f"[SKIP] {model['label']} — OPENROUTER_API_KEY env var required but not set")
+            print(f"[SKIP] {name} — OPENROUTER_API_KEY env var required but not set")
             continue
 
         cmd = [
@@ -298,19 +305,24 @@ def main():
         if model.get("params_b") is not None:
             cmd += ["--params-b", str(model["params_b"])]
 
+        cmd += ["--display-name", name]
+
+        if model.get("cloud"):
+            cmd += ["--cloud"]
+
         if model.get("needs_api_key"):
             cmd += ["--api-key", google_api_key]
 
         if model.get("needs_openrouter_api_key"):
             cmd += ["--api-key", openrouter_api_key]
 
-        print(f"\n[RUN] {model['label']}: {' '.join(cmd)}\n{'='*60}")
+        print(f"\n[RUN] {name}: {' '.join(cmd)}\n{'='*60}")
         result = subprocess.run(cmd, cwd=SCRIPT_DIR, stdin=subprocess.DEVNULL)
 
         if result.returncode != 0:
-            print(f"[ERROR] {model['label']} exited with code {result.returncode}")
+            print(f"[ERROR] {name} exited with code {result.returncode}")
         else:
-            print(f"[DONE] {model['label']} -> {output_path}")
+            print(f"[DONE] {name} -> {output_path}")
 
 
 if __name__ == "__main__":
