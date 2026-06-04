@@ -21,6 +21,7 @@ def _hf_tokenizer_from_gguf(model_spec: str) -> str:
         "aya-expanse-8b": "CohereForAI/aya-expanse-8b",
         "EuroLLM-9B-Instruct": "utter-project/EuroLLM-9B-Instruct",
         "BSC-LT_-_salamandra-7b-instruct-gguf": "BSC-LT/salamandra-7b-instruct",
+        "gemma-4-12b-it": "google/gemma-4-12b-it",
     }
 
     repo = model_spec.rsplit(":", 1)[0]

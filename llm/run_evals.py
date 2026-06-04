@@ -116,6 +116,18 @@ MODELS = [
         "params_b": 7.0,
     },
     {
+        "display_name": "gemma4-12b",
+        "output": "evals/results_gemma4_12b.json",
+        "args": [
+            "--model",
+            "unsloth/gemma-4-12b-it-GGUF:Q8_0",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 13,
+        "params_b": 12.0,
+    },
+    {
         "display_name": "gemma4-e4b",
         "output": "evals/results_gemma4_e4b.json",
         "args": [
