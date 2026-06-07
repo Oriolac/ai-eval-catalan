@@ -62,5 +62,6 @@
         "chrf_stderr,none": 0.5975108586684387
       }
     }
-  }
+  },
+  "quantization": ""
 }

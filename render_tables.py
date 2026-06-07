@@ -8,6 +8,7 @@ Usage:
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
@@ -47,11 +48,20 @@ def fmt_params(row) -> str:
     return f"{size} ({mem})"
 
 
-def render(json_path: Path, template_path: Path, out: Path) -> None:
+def render(json_path: Path, template_path: Path, out: Path, row_filter=None, extra_cols=None, sort_key=None) -> None:
     data = json.loads(json_path.read_text())
-    col_labels = data["text"]
+    col_labels = dict(data["text"])
     rows = data["data"]
+    if row_filter is not None:
+        rows = [r for r in rows if row_filter(r)]
+    if sort_key is not None:
+        rows = sorted(rows, key=sort_key)
     cols = [k for k in col_labels if k != "model" and k not in ("cloud", "params_b", "memory_gb")]
+    if extra_cols:
+        for k, label in reversed(list(extra_cols.items())):
+            if k not in cols:
+                cols.insert(0, k)
+            col_labels[k] = label
 
     env = Environment(loader=FileSystemLoader(str(template_path.parent)))
     env.filters["fmt"] = fmt
@@ -70,10 +80,20 @@ def main():
     parser.add_argument("--llm-json", default="llm/llms.json")
     parser.add_argument("--asr-json", default="asr/asrs.json")
     parser.add_argument("--llm-out", default="llm/llms_table.html")
+    parser.add_argument("--llm-quantized-out", default="llm/llms_quantized_table.html")
     parser.add_argument("--asr-out", default="asr/asrs_table.html")
     args = parser.parse_args()
 
-    render(Path(args.llm_json), Path("llm/table_template.jinja"), Path(args.llm_out))
+    render(Path(args.llm_json), Path("llm/table_template.jinja"), Path(args.llm_out),
+           row_filter=lambda r: not r.get("quantized_analysis_only", False))
+    render(
+        Path(args.llm_json),
+        Path("llm/table_template.jinja"),
+        Path(args.llm_quantized_out),
+        row_filter=lambda r: r["model"].startswith("gemma3"),
+        extra_cols={"quantization": "Quantization"},
+        sort_key=lambda r: (-(r.get("params_b") or 0), re.sub(r"-q\d+$", "", r["model"].lower()), -(r.get("clam_pct") or 0)),
+    )
     render(Path(args.asr_json), Path("asr/table_template.jinja"), Path(args.asr_out))
 
 

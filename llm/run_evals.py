@@ -23,6 +23,75 @@ SCRIPT_DIR = Path(__file__).parent
 # 24B Q8 (~24 GB) exceeds VRAM; using Q4_K_M (~13 GB) instead.
 MODELS = [
     {
+        "display_name": "gemma3-4b-q2",
+        "output": "evals/results_gemma3_4b_q2.json",
+        "args": [
+            "--model",
+            "bartowski/google_gemma-3-4b-it-GGUF:Q2_K",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 2,
+        "params_b": 4.0,
+        "quantization": "q2",
+        "quantized_analysis_only": True,
+    },
+    {
+        "display_name": "gemma3-4b-q4",
+        "output": "evals/results_gemma3_4b_q4.json",
+        "args": [
+            "--model",
+            "bartowski/google_gemma-3-4b-it-GGUF:Q4_K_M",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 3,
+        "params_b": 4.0,
+        "quantization": "q4",
+        "quantized_analysis_only": True,
+    },
+    {
+        "display_name": "gemma3-4b",
+        "output": "evals/results_gemma3_4b_q8.json",
+        "args": [
+            "--model",
+            "bartowski/google_gemma-3-4b-it-GGUF:Q8_0",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 5,
+        "params_b": 4.0,
+        "quantization": "q8",
+    },
+    {
+        "display_name": "gemma3-12b-q2",
+        "output": "evals/results_gemma3_12b_q2.json",
+        "args": [
+            "--model",
+            "bartowski/google_gemma-3-12b-it-GGUF:Q2_K",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 4,
+        "params_b": 12.0,
+        "quantization": "q2",
+        "quantized_analysis_only": True,
+    },
+    {
+        "display_name": "gemma3-12b-q4",
+        "output": "evals/results_gemma3_12b_q4.json",
+        "args": [
+            "--model",
+            "bartowski/google_gemma-3-12b-it-GGUF:Q4_K_M",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 7,
+        "params_b": 12.0,
+        "quantization": "q4",
+        "quantized_analysis_only": True,
+    },
+    {
         "display_name": "gemma3-12b",
         "output": "evals/results_gemma3_12b.json",
         "args": [
@@ -33,6 +102,48 @@ MODELS = [
         ],
         "ram_gb": 12,
         "params_b": 12.0,
+        "quantization": "q8",
+    },
+    {
+        "display_name": "gemma3-27b-q2",
+        "output": "evals/results_gemma3_27b_q2.json",
+        "args": [
+            "--model",
+            "bartowski/google_gemma-3-27b-it-GGUF:Q2_K",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 9,
+        "params_b": 27.0,
+        "quantization": "q2",
+        "quantized_analysis_only": True,
+    },
+    {
+        "display_name": "gemma3-27b-q4",
+        "output": "evals/results_gemma3_27b_q4.json",
+        "args": [
+            "--model",
+            "bartowski/google_gemma-3-27b-it-GGUF:Q4_K_M",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 15,
+        "params_b": 27.0,
+        "quantization": "q4",
+        "quantized_analysis_only": True,
+    },
+    {
+        "display_name": "gemma3-27b",
+        "output": "evals/results_gemma3_27b.json",
+        "args": [
+            "--model",
+            "bartowski/google_gemma-3-27b-it-GGUF:Q8_0",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 27,
+        "params_b": 27.0,
+        "quantization": "q8",
     },
     {
         "display_name": "mistral-small-24b",
@@ -45,6 +156,7 @@ MODELS = [
         ],
         "ram_gb": 13,
         "params_b": 24.0,
+        "quantization": "q4",
     },
     {
         "display_name": "qwen3-14b",
@@ -52,6 +164,7 @@ MODELS = [
         "args": ["--model", "bartowski/Qwen_Qwen3-14B-GGUF:Q8_0", "--device", "cuda"],
         "ram_gb": 14,
         "params_b": 14.0,
+        "quantization": "q8",
     },
     {
         "display_name": "qwen3.5-9b",
@@ -59,6 +172,7 @@ MODELS = [
         "args": ["--model", "bartowski/Qwen_Qwen3.5-9B-GGUF:Q8_0", "--device", "cuda"],
         "ram_gb": 9,
         "params_b": 9.0,
+        "quantization": "q8",
     },
     {
         "display_name": "qwen3.6-27b",
@@ -66,6 +180,7 @@ MODELS = [
         "args": ["--model", "unsloth/Qwen3.6-27B-GGUF:Q8_0", "--device", "cuda"],
         "ram_gb": 27,
         "params_b": 27.0,
+        "quantization": "q8",
     },
     {
         "display_name": "llama3.1-8b",
@@ -78,6 +193,7 @@ MODELS = [
         ],
         "ram_gb": 8,
         "params_b": 8.0,
+        "quantization": "q8",
     },
     {
         "display_name": "aya-expanse-8b",
@@ -90,6 +206,7 @@ MODELS = [
         ],
         "ram_gb": 8,
         "params_b": 8.0,
+        "quantization": "q8",
     },
     {
         "display_name": "eurollm-9b",
@@ -102,6 +219,7 @@ MODELS = [
         ],
         "ram_gb": 9,
         "params_b": 9.0,
+        "quantization": "q8",
     },
     {
         "display_name": "salamandra-7b",
@@ -114,6 +232,21 @@ MODELS = [
         ],
         "ram_gb": 7,
         "params_b": 7.0,
+        "quantization": "q8",
+    },
+    {
+        "display_name": "gemma4-12b-q4",
+        "output": "evals/results_gemma4_12b_q4.json",
+        "args": [
+            "--model",
+            "unsloth/gemma-4-12b-it-GGUF:Q4_K_M",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 7,
+        "params_b": 12.0,
+        "quantization": "q4",
+        "quantized_analysis_only": True,
     },
     {
         "display_name": "gemma4-12b",
@@ -126,6 +259,21 @@ MODELS = [
         ],
         "ram_gb": 13,
         "params_b": 12.0,
+        "quantization": "q8",
+    },
+    {
+        "display_name": "gemma4-e4b-q4",
+        "output": "evals/results_gemma4_e4b_q4.json",
+        "args": [
+            "--model",
+            "bartowski/google_gemma-4-E4B-it-GGUF:Q4_K_M",
+            "--device",
+            "cuda",
+        ],
+        "ram_gb": 3,
+        "params_b": 4.0,
+        "quantization": "q4",
+        "quantized_analysis_only": True,
     },
     {
         "display_name": "gemma4-e4b",
@@ -138,6 +286,7 @@ MODELS = [
         ],
         "ram_gb": 5,
         "params_b": 4.0,
+        "quantization": "q8",
     },
     {
         "display_name": "gemma4-26b-q4",
@@ -150,9 +299,11 @@ MODELS = [
         ],
         "ram_gb": 14,
         "params_b": 26.0,
+        "quantization": "q4",
+        "quantized_analysis_only": True,
     },
     {
-        "display_name": "gemma4-26b-q8",
+        "display_name": "gemma4-26b",
         "output": "evals/results_gemma4_26b_q8.json",
         "args": [
             "--model",
@@ -162,6 +313,7 @@ MODELS = [
         ],
         "ram_gb": 26,
         "params_b": 26.0,
+        "quantization": "q8",
     },
     {
         "display_name": "gemini-3-1-preview",
@@ -176,6 +328,7 @@ MODELS = [
         "needs_api_key": True,
         "ram_gb": 0,
         "params_b": None,
+        "quantization": "",
     },
     {
         "display_name": "gemini-3-flash-preview",
@@ -190,6 +343,7 @@ MODELS = [
         "needs_api_key": True,
         "ram_gb": 0,
         "params_b": None,
+        "quantization": "",
     },
     {
         "display_name": "gemini-3-5-flash",
@@ -204,6 +358,7 @@ MODELS = [
         "needs_api_key": True,
         "ram_gb": 0,
         "params_b": None,
+        "quantization": "",
     },
     {
         "display_name": "gpt-5.4-mini",
@@ -218,6 +373,7 @@ MODELS = [
         "needs_openai_api_key": True,
         "ram_gb": 0,
         "params_b": None,
+        "quantization": "",
     },
     {
         "display_name": "gpt-5.5",
@@ -232,6 +388,7 @@ MODELS = [
         "needs_openai_api_key": True,
         "ram_gb": 0,
         "params_b": None,
+        "quantization": "",
     },
     {
         "display_name": "claude-opus-4-7",
@@ -246,6 +403,7 @@ MODELS = [
         "needs_openrouter_api_key": True,
         "ram_gb": 0,
         "params_b": None,
+        "quantization": "",
     },
 ]
 
@@ -321,6 +479,9 @@ def main():
 
         if model.get("cloud"):
             cmd += ["--cloud"]
+
+        if model.get("quantized_analysis_only"):
+            cmd += ["--quantized-analysis"]
 
         if model.get("needs_api_key"):
             cmd += ["--api-key", google_api_key]

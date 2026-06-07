@@ -115,7 +115,7 @@ def main():
     env = Environment(loader=FileSystemLoader(str(template_path.parent)))
     template = env.get_template(template_path.name)
 
-    llm_data = json.loads(Path(args.llm_json).read_text())["data"]
+    llm_data = [r for r in json.loads(Path(args.llm_json).read_text())["data"] if not r.get("quantized_analysis_only", False)]
     render(template, [build_clam_chart(llm_data)], Path(args.llm_out))
 
     asr_data = json.loads(Path(args.asr_json).read_text())["data"]

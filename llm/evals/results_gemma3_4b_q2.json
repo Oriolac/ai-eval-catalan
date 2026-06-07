@@ -1,0 +1,83 @@
+{
+  "model": "bartowski/google_gemma-3-4b-it-GGUF:Q2_K",
+  "display_name": "gemma3-4b-q2",
+  "cloud": false,
+  "params_b": 4.0,
+  "memory_gb": 1.3,
+  "quantization": "q2",
+  "benchmarks": {
+    "veritasqa": {
+      "accuracy": 1.0,
+      "n": 353
+    },
+    "sts_ca": {
+      "pearson": 0.3973,
+      "n": 400
+    },
+    "casum": {
+      "rouge1": 0.3033,
+      "rouge2": 0.1285,
+      "rougeL": 0.243,
+      "n": 400
+    },
+    "catcola": {
+      "mcc": 0.2179,
+      "accuracy": 0.6875,
+      "n": 400
+    },
+    "club_qa": {
+      "exact_match_approx": 0.73,
+      "n": 400
+    },
+    "iberbench": {
+      "catcola": {
+        "alias": "catcola",
+        "acc,none": 0.25,
+        "acc_stderr,none": 0.021677749238103,
+        "mcc,none": 0.0,
+        "mcc_stderr,none": 0.0
+      },
+      "wnli_ca": {
+        "alias": "wnli_ca",
+        "acc,none": 0.5633802816901409,
+        "acc_stderr,none": 0.0592793555841297
+      },
+      "teca": {
+        "alias": "teca",
+        "acc,none": 0.3725,
+        "acc_stderr,none": 0.0242038000082031
+      }
+    },
+    "flores": {
+      "catalan_bench_flores_en-ca": {
+        "alias": "catalan_bench_flores_en-ca",
+        "bleu,none": 29.891557684354453,
+        "bleu_stderr,none": 0.8032113979667541,
+        "ter,none": 56.90372218756499,
+        "ter_stderr,none": 1.0957845581571284,
+        "chrf,none": 57.112409010172996,
+        "chrf_stderr,none": 0.6337660230463869
+      },
+      "catalan_bench_flores_ca-en": {
+        "alias": "catalan_bench_flores_ca-en",
+        "bleu,none": 35.85143737486523,
+        "bleu_stderr,none": 0.9158911260237392,
+        "ter,none": 52.181089365715636,
+        "ter_stderr,none": 1.2545941252509578,
+        "chrf,none": 64.90248066423251,
+        "chrf_stderr,none": 0.6194881062603353
+      }
+    },
+    "ifeval": {
+      "alias": "ifeval_ca",
+      "prompt_level_strict_acc,none": 0.43,
+      "prompt_level_strict_acc_stderr,none": 0.02478478796128207,
+      "inst_level_strict_acc,none": 0.5457570715474209,
+      "inst_level_strict_acc_stderr,none": "N/A",
+      "prompt_level_loose_acc,none": 0.47,
+      "prompt_level_loose_acc_stderr,none": 0.024986211736522972,
+      "inst_level_loose_acc,none": 0.5773710482529119,
+      "inst_level_loose_acc_stderr,none": "N/A"
+    }
+  }
+}

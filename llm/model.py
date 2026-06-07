@@ -41,12 +41,6 @@ from llamaserver import (
     llama_server_context,
 )
 
-# /mnt/sda1 may not be mounted — strip broken HF cache paths so datasets
-# falls back to the default ~/.cache/huggingface location.
-for _key in ("HF_HOME", "HF_DATASETS_CACHE", "TRANSFORMERS_CACHE"):
-    if _key in os.environ and not os.path.isdir(os.environ[_key]):
-        del os.environ[_key]
-
 # facebook/flores uses an old dataset script — trust it so datasets doesn't refuse to load it.
 os.environ.setdefault("HF_DATASETS_TRUST_REMOTE_CODE", "1")
 
@@ -820,6 +814,12 @@ def main():
         action="store_true",
         default=False,
         help="Mark this model as a cloud API model (not a local GGUF)",
+    )
+    parser.add_argument(
+        "--quantized-analysis",
+        action="store_true",
+        default=False,
+        help="Mark this model as a quantized (Q4) variant for analysis purposes",
     )
     args = parser.parse_args()
 

@@ -61,5 +61,6 @@
       "inst_level_loose_acc,none": 0.5391014975041597,
       "inst_level_loose_acc_stderr,none": "N/A"
     }
-  }
+  },
+  "quantization": "q8"
 }

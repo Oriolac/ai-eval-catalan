@@ -8,6 +8,7 @@ Usage:
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from jinja2 import Environment
@@ -178,7 +179,7 @@ HTML_TEMPLATE_SRC = """\
     </tr>
   </thead>
   <tbody>
-    {% for row in rows %}{% set label, metrics, cloud, params_b, memory_gb = row %}
+    {% for row in rows %}{% set label, metrics, cloud, params_b, memory_gb, quantized_analysis_only, quantization = row %}
     <tr>
       <td>{% if cloud %}<b>{{ label }}</b>{% else %}{{ label }}{% endif %}</td>
       <td>{{ row | fmt_params }}</td>
@@ -199,7 +200,7 @@ HTML_TEMPLATE_SRC = """\
     </tr>
   </thead>
   <tbody>
-    {% for row in rows %}{% set label, metrics, cloud, params_b, memory_gb = row %}
+    {% for row in rows %}{% set label, metrics, cloud, params_b, memory_gb, quantized_analysis_only, quantization = row %}
     <tr>
       <td>{% if cloud %}<b>{{ label }}</b>{% else %}{{ label }}{% endif %}</td>
       <td>{{ row | fmt_params }}</td>
@@ -233,6 +234,15 @@ def main():
     args = parser.parse_args()
 
     results_dir = Path(args.results_dir)
+
+    # Build lookup from output path -> quantized_analysis_only using run_evals.py as source of truth
+    sys.path.insert(0, str(Path(__file__).parent))
+    from run_evals import MODELS
+    quantized_only_by_output = {
+        Path(m["output"]).name: m.get("quantized_analysis_only", False)
+        for m in MODELS
+    }
+
     rows = []
     all_metric_keys = []
 
@@ -244,7 +254,9 @@ def main():
         memory_gb = data.get("memory_gb")
         display = data.get("display_name") or label
         cloud = data.get("cloud", False)
-        rows.append((display, metrics, cloud, params_b, memory_gb))
+        quantized_analysis_only = quantized_only_by_output.get(path.name, False)
+        quantization = data.get("quantization", "")
+        rows.append((display, metrics, cloud, params_b, memory_gb, quantized_analysis_only, quantization))
         for k in metrics:
             if k not in all_metric_keys:
                 all_metric_keys.append(k)
@@ -273,7 +285,7 @@ def main():
     print(separator)
     print(header)
     print(separator)
-    for label, metrics, _cloud, params_b, memory_gb in rows:
+    for label, metrics, _cloud, params_b, memory_gb, *_ in rows:
         row = "".join(f"{fmt(metrics.get(k)):>{col_width}}" for k in all_metric_keys)
         print(f"{label:<{label_width}}{fmt_params(params_b, memory_gb):>{params_col_w}}{row}")
     print(separator)
@@ -296,7 +308,7 @@ def main():
     print(norm_sep)
     print(norm_header)
     print(norm_sep)
-    for label, metrics, _cloud, params_b, memory_gb in rows:
+    for label, metrics, _cloud, params_b, memory_gb, *_ in rows:
         norm_row = "".join(
             f"{fmt(normalize_score(k, metrics.get(k))):>{norm_col_w}}" for k in norm_keys
         )
@@ -319,12 +331,14 @@ def main():
         "clam_pct": COLUMN_LABELS["clam_pct"],
     }
     json_rows = []
-    for label, metrics, cloud, params_b, memory_gb in rows:
+    for label, metrics, cloud, params_b, memory_gb, quantized_analysis_only, quantization in rows:
         entry = {
             "model": label,
             "cloud": cloud,
             "params_b": params_b,
             "memory_gb": memory_gb,
+            "quantized_analysis_only": quantized_analysis_only,
+            "quantization": quantization,
             **{k: round(normalize_score(k, metrics.get(k)), 4) if normalize_score(k, metrics.get(k)) is not None else None for k in norm_keys},
             "clam_pct": round(clam_score(metrics), 2) if clam_score(metrics) is not None else None,
         }
