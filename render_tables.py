@@ -91,7 +91,7 @@ def main():
         Path("llm/table_template.jinja"),
         Path(args.llm_quantized_out),
         row_filter=lambda r: r["model"].startswith("gemma3"),
-        extra_cols={"quantization": "Quantization"},
+        extra_cols={"quantization": "Quantització"},
         sort_key=lambda r: (-(r.get("params_b") or 0), re.sub(r"-q\d+$", "", r["model"].lower()), -(r.get("clam_pct") or 0)),
     )
     render(Path(args.asr_json), Path("asr/table_template.jinja"), Path(args.asr_out))
