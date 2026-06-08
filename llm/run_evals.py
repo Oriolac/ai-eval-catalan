@@ -150,13 +150,13 @@ MODELS = [
         "output": "evals/results_mistral_small_24b.json",
         "args": [
             "--model",
-            "bartowski/mistralai_Mistral-Small-3.1-24B-Instruct-2503-GGUF:Q4_K_M",
+            "bartowski/mistralai_Mistral-Small-3.1-24B-Instruct-2503-GGUF:Q8_0",
             "--device",
             "cuda",
         ],
-        "ram_gb": 13,
+        "ram_gb": 25,
         "params_b": 24.0,
-        "quantization": "q4",
+        "quantization": "q8",
     },
     {
         "display_name": "qwen3-14b",
