@@ -48,7 +48,7 @@ def fmt_params(row) -> str:
     return f"{size} ({mem})"
 
 
-def render(json_path: Path, template_path: Path, out: Path, row_filter=None, extra_cols=None, sort_key=None) -> None:
+def render(json_path: Path, template_path: Path, out: Path, row_filter=None, extra_cols=None, sort_key=None, show_params=True) -> None:
     data = json.loads(json_path.read_text())
     col_labels = dict(data["text"])
     rows = data["data"]
@@ -70,7 +70,7 @@ def render(json_path: Path, template_path: Path, out: Path, row_filter=None, ext
     env.filters["fmt_params"] = fmt_params
     template = env.get_template(template_path.name)
 
-    html = template.render(rows=rows, cols=cols, col_labels=col_labels)
+    html = template.render(rows=rows, cols=cols, col_labels=col_labels, show_params=show_params)
     out.write_text(html, encoding="utf-8")
     print(f"Saved to {out}")
 
@@ -82,6 +82,8 @@ def main():
     parser.add_argument("--llm-out", default="llm/llms_table.html")
     parser.add_argument("--llm-quantized-out", default="llm/llms_quantized_table.html")
     parser.add_argument("--asr-out", default="asr/asrs_table.html")
+    parser.add_argument("--emb-json", default="embeddings/embeddings.json")
+    parser.add_argument("--emb-out", default="embeddings/embeddings_table.html")
     args = parser.parse_args()
 
     render(Path(args.llm_json), Path("llm/table_template.jinja"), Path(args.llm_out),
@@ -95,6 +97,13 @@ def main():
         sort_key=lambda r: (-(r.get("params_b") or 0), re.sub(r"-q\d+$", "", r["model"].lower()), -(r.get("clam_pct") or 0)),
     )
     render(Path(args.asr_json), Path("asr/table_template.jinja"), Path(args.asr_out))
+    render(
+        Path(args.emb_json),
+        Path("embeddings/table_template.jinja"),
+        Path(args.emb_out),
+        sort_key=lambda r: -(r.get("composite") or -1),
+        show_params=False,
+    )
 
 
 if __name__ == "__main__":

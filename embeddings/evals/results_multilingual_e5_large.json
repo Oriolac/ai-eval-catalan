@@ -1,0 +1,30 @@
+{
+  "model": "intfloat/multilingual-e5-large",
+  "display_name": "multilingual-e5-large",
+  "embedding_dim": 1024,
+  "benchmarks": {
+    "xquad_ca_retrieval": {
+      "ndcg_at_10": 0.9735,
+      "ndcg_at_10_ci": [
+        0.9665,
+        0.9796
+      ],
+      "n_queries": 1189,
+      "n_corpus": 240
+    },
+    "sts_ca": {
+      "spearman": 0.6967,
+      "spearman_ci": [
+        0.6433,
+        0.7421
+      ],
+      "n_pairs": 500
+    },
+    "tecla_classification": {
+      "macro_f1": 0.9218,
+      "n_train": 10000,
+      "n_test": 17007,
+      "n_classes": 4
+    }
+  }
+}

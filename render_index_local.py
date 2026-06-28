@@ -11,6 +11,8 @@ FRAGMENTS = [
     ("LLM — Bar Chart",          "llm/llms_bar.html"),
     ("ASR — Taula",              "asr/asrs_table.html"),
     ("ASR — Bar Chart",          "asr/asrs_bar.html"),
+    ("Embeddings — Taula",       "embeddings/embeddings_table.html"),
+    ("Embeddings — Bar Chart",   "embeddings/embeddings_bar.html"),
 ]
 
 STYLE = """

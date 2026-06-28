@@ -31,6 +31,15 @@ def wer_color(wer: float) -> str:
     return "#c62828"       # red
 
 
+# Color thresholds for embeddings composite score (higher = better)
+def composite_color(score: float) -> str:
+    if score >= 0.85:
+        return "#388e3c"   # green
+    if score >= 0.80:
+        return "#f9a825"   # amber
+    return "#c62828"       # red
+
+
 def shorten_asr_label(model: str) -> str:
     """Keep the last component, trim long paths like 'projecte-aina/whisper-...'."""
     name = model.split("/")[-1]
@@ -97,6 +106,34 @@ def build_wer_chart(data: list[dict]) -> dict:
     }
 
 
+def build_embeddings_chart(data: list[dict]) -> dict:
+    valid = [r for r in data if r.get("composite") is not None and r["composite"] >= 0]
+    valid.sort(key=lambda r: r["composite"], reverse=True)
+    max_val = max(r["composite"] for r in valid)
+    threshold = 0.85
+    threshold_pct = (threshold / max_val) * 100
+
+    rows = []
+    for r in valid:
+        score = r["composite"]
+        rows.append({
+            "label": r["model"],
+            "bar_pct": (score / max_val) * 100,
+            "color": composite_color(score),
+            "display": f"{score:.4f}",
+            "cloud": r.get("cloud", False),
+        })
+
+    return {
+        "title": "Embeddings — Puntuació composta (XQuAD nDCG@10 + STS-ca Spearman + TeCla F1)",
+        "subtitle": "0.85 alta qualitat",
+        "threshold_pct": threshold_pct,
+        "threshold_label": "≥ 0.85 alta qualitat",
+        "caption": "Línia discontínua a 0.85 = \"alta qualitat per a tasques en català\"",
+        "rows": rows,
+    }
+
+
 def render(template, charts: list[dict], out: Path) -> None:
     html = template.render(charts=charts)
     out.write_text(html, encoding="utf-8")
@@ -109,6 +146,8 @@ def main():
     parser.add_argument("--asr-json", default="asr/asrs.json")
     parser.add_argument("--llm-out", default="llm/llms_bar.html")
     parser.add_argument("--asr-out", default="asr/asrs_bar.html")
+    parser.add_argument("--emb-json", default="embeddings/embeddings.json")
+    parser.add_argument("--emb-out", default="embeddings/embeddings_bar.html")
     args = parser.parse_args()
 
     template_path = Path(__file__).parent / "bar_chart_template.jinja"
@@ -120,6 +159,9 @@ def main():
 
     asr_data = json.loads(Path(args.asr_json).read_text())["data"]
     render(template, [build_wer_chart(asr_data)], Path(args.asr_out))
+
+    emb_data = json.loads(Path(args.emb_json).read_text())["data"]
+    render(template, [build_embeddings_chart(emb_data)], Path(args.emb_out))
 
 
 if __name__ == "__main__":

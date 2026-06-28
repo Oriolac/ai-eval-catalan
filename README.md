@@ -22,6 +22,12 @@ ai-eval-catalan/
 │   ├── summarize_results.py  # Genera el JSON i HTML de resultats
 │   ├── table_template.jinja  # Plantilla per a la taula de resultats
 │   └── evals/                # Resultats JSON per model
+├── embeddings/               # Avaluació de models d'embeddings
+│   ├── model.py              # Pipeline d'avaluació per a un model
+│   ├── run_evals.py          # Orquestrador per executar múltiples models
+│   ├── summarize_results.py  # Genera el JSON i HTML de resultats
+│   ├── table_template.jinja  # Plantilla per a la taula de resultats
+│   └── evals/                # Resultats JSON per model
 └── mt/                       # Avaluació de traducció automàtica
     └── mt.py                 # Avaluació de models MT
 ```
@@ -32,13 +38,14 @@ ai-eval-catalan/
 
 Quan es fa un push a qualsevol branca, el workflow de GitHub Actions `.github/workflows/publish-llms-json.yml` executa automàticament els passos següents:
 
-1. **Genera els fitxers de dades** a partir dels resultats JSON individuals de `llm/evals/` i `asr/evals/`:
+1. **Genera els fitxers de dades** a partir dels resultats JSON individuals de `llm/evals/`, `asr/evals/` i `embeddings/evals/`:
    - `llm/summarize_results.py` → `llm/llms.json`
    - `asr/summarize_results.py` → `asr/asrs.json`
+   - `embeddings/summarize_results.py` → `embeddings/embeddings.json`
 
 2. **Genera els fitxers HTML** de taules i gràfics de barres:
-   - `render_tables.py` → `llm/llms_table.html`, `asr/asrs_table.html`
-   - `render_bar_charts.py` → `llm/llms_bar.html`, `asr/asrs_bar.html`
+   - `render_tables.py` → `llm/llms_table.html`, `asr/asrs_table.html`, `embeddings/embeddings_table.html`
+   - `render_bar_charts.py` → `llm/llms_bar.html`, `asr/asrs_bar.html`, `embeddings/embeddings_bar.html`
 
 3. **Puja els fitxers a la branca `prod-data`**, que actua com a repositori de dades en producció:
    ```
@@ -48,7 +55,10 @@ Quan es fa un push a qualsevol branca, el workflow de GitHub Actions `.github/wo
    ├── llms_bar.html
    ├── asrs.json
    ├── asrs_table.html
-   └── asrs_bar.html
+   ├── asrs_bar.html
+   ├── embeddings.json
+   ├── embeddings_table.html
+   └── embeddings_bar.html
    ```
 
 La web de [Softcatalà](https://www.softcatala.org) llegeix directament els fitxers de la branca `prod-data` per mostrar els resultats actualitzats.

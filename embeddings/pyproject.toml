@@ -1,0 +1,18 @@
+[project]
+name = "embedding-eval"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "sentence-transformers>=3.0.0",
+    "datasets>=2.16.0,<3.0.0",
+    "numpy",
+    "scipy",
+    "einops>=0.8.2",
+    "xformers>=0.0.35",
+]
+
+[project.optional-dependencies]
+cloud = [
+    "openai>=1.0.0",
+    "google-genai>=0.3.0",
+]
